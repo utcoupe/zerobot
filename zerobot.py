@@ -62,12 +62,20 @@ class ResponseEvent:
 		self._ev = threading.Event()
 		self.response = None
 		self.cb_fct = cb_fct
-		
-	def set(self, response):
-		self.response = response
-		self._ev.set()
-		if self.cb_fct:
-			self.cb_fct(response)
+
+	def _nonblocking_set(self, response):
+		t = threading.Thread(target=self.set, args=(response,True))
+		t.setDaemon(True)
+		t.start()
+	
+	def set(self, response, block=False):
+		if block:
+			self.response = response
+			if self.cb_fct:
+				self.cb_fct(response)
+			self._ev.set()
+		else:
+			self._nonblocking_set(response)
 
 	def wait(self, timeout=None):
 		self._ev.wait(timeout)
@@ -258,7 +266,7 @@ if __name__ == "__main__":
 
 	cool = ClassExposer("cool", "tcp://localhost:8081", Cool())
 	cool.start()
-	
+	"""
 	remote_cool = RemoteClient("remote_cool", "tcp://localhost:8080", "cool")
 	remote_cool.start()
 
@@ -267,7 +275,7 @@ if __name__ == "__main__":
 	while 1:
 		print(remote_cool.ping(56,block=True))
 		time.sleep(1)
-	"""print(remote_cool.ping(56,block=True))
+	print(remote_cool.ping(56,block=True))
 	print(remote_cool.ping(56,block=True))
 	print(remote_cool.help(block=True))
 	print(remote_cool.help('hello',block=True))
@@ -279,7 +287,7 @@ if __name__ == "__main__":
 		print(ex)
 	"""
 	
-	"""
+	
 	import sys
 	N,N_REQ,LEN_MSG,ASYNC = sys.argv[1:]
 	N = int(N)
@@ -337,5 +345,3 @@ if __name__ == "__main__":
 	#remote_cool.stop()
 	cool.stop()
 	server.stop()
-	"""
-	server.join()
