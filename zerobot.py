@@ -36,6 +36,12 @@ class Request:
 		d = json.loads(msg.decode())
 		return Request(**d)
 
+	def __eq__(self, o):
+		return self.uid == o.uid and self.fct == o.fct and list(self.args) == list(o.args) and self.kwargs == o.kwargs
+
+	def __repr__(self):
+		return "Request(%s,%s,%s,%s)" % (self.uid, self.fct, self.args, self.kwargs)
+
 class Response:
 	def __init__(self, uid, data, error=None):
 		self.uid = uid
