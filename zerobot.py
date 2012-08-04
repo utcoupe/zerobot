@@ -37,7 +37,7 @@ class Request:
 		return Request(**d)
 
 	def __eq__(self, o):
-		return self.uid == o.uid and self.fct == o.fct and list(self.args) == list(o.args) and self.kwargs == o.kwargs
+		return self.uid == o.uid and self.fct == o.fct and self.args == o.args and self.kwargs == o.kwargs
 
 	def __repr__(self):
 		return "Request(%s,%s,%s,%s)" % (self.uid, self.fct, self.args, self.kwargs)
@@ -62,6 +62,12 @@ class Response:
 		#print('Response.unpack', msg)
 		d = json.loads(msg.decode())
 		return Response(**d)
+
+	def __eq__(self, o):
+		return self.uid == o.uid and self.data == self.data and self.error == self.error
+
+	def __repr__(self):
+		return "Response(%s,%s,%s)" % (self.uid, self.data, self.error)
 
 class ResponseEvent:
 	def __init__(self, cb_fct=None):
