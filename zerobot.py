@@ -109,6 +109,11 @@ class ResponseEvent:
 
 class AsyncClient(threading.Thread):
 	def __init__(self, identity, bind_addr, ctx=None):
+		"""
+		@param {str} identity identité du client
+		@param {str} bind_addr adresse sur laquelle se connecter
+		@param {zmq.Context} zmq context
+		"""
 		threading.Thread.__init__ (self)
 		self.identity = identity
 		self.ctx = ctx or zmq.Context()
@@ -148,7 +153,10 @@ class AsyncClient(threading.Thread):
 		self.logger.info("Client %s stopped", self.identity)
 
 	def _process(self, msg):
-		print('Client %s received %s' % (self.identity, msg))
+		"""
+		méthode appellée à chaque reception d'un message
+		"""
+		self.logger.warn("method AsyncClient._process must be override")
 		
 	def stop(self):
 		self._e_stop.set()
@@ -158,10 +166,32 @@ class ClassExposer(AsyncClient):
 	Permet d'exposer les méthodes d'une classe à distance.
 	"""
 	def __init__(self, identity, bind_addr, exposed_obj, ctx=None):
+		"""
+		@param {str} identity nom unique du client
+		@param {str} bind_addr l'adresse du backend du serveur
+		@param {Object} une instance de l'objet à exposer
+		@param {zmq.Context} zmq context
+		"""
 		super(ClassExposer, self).__init__(identity, bind_addr, ctx)
 		self.exposed_obj = exposed_obj
 
 	def _process(self, msg):
+		"""
+		Le message reçu est en 2 parties :
+		1. remote_id
+		2. packed request
+		
+		Une Request est un dictionnaire:
+		{@code
+			{
+				uid: 	{str} unique id qu'il faudra renvoyer
+				fct:	{str} la fonction à appeller
+				args:	{list} les arguments
+				kwargs:	{dict} les arguments només
+			}
+		}
+		La fonction va unpack le message et la request pour extraire la fonction à appeller.
+		"""
 		#print('ClassExposer %s received: %s' % (self.identity, msg))
 		remote_id = msg[0]
 		request = Request.unpack(msg[1])
@@ -191,6 +221,9 @@ class ClassExposer(AsyncClient):
 		self.socket.send_multipart([remote_id, response.pack()])
 
 	def help(self, method=None):
+		"""
+		Permet d'afficher de l'aide sur la classe exposée, utilise la doc python du code source.
+		"""
 		if not method:
 			methods = inspect.getmembers(self.exposed_obj, predicate=inspect.ismethod)
 			r =  map(lambda x: x[0], methods)
@@ -204,6 +237,12 @@ class RemoteClient(AsyncClient):
 	Permet de faire des appels à une classe distante
 	"""
 	def __init__(self, identity, bind_addr, remote_id, ctx=None):
+		"""
+		@param {str} identity
+		@param {str} bind_addr adresse du frontend du serveur
+		@param {str} remote_id identity du client distant
+		@param {zmq.Context} zmq ctx
+		"""
 		super(RemoteClient, self).__init__(identity, bind_addr, ctx)
 		self.remote_id = remote_id
 		self._resp_events = {}
