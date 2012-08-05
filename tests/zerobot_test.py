@@ -43,8 +43,8 @@ class ResponseTestCase(unittest.TestCase):
 		unpack = Response.unpack(pack)
 		self.assertEqual(self.r, unpack)
 
-class ZeroBotTestCase(unittest.TestCase):
-	class Cool:
+class RemoteTestCase(unittest.TestCase):
+	class Abc:
 		def ping(self, num):
 			return num+42
 
@@ -54,23 +54,54 @@ class ZeroBotTestCase(unittest.TestCase):
 		def hard_one(self, a=3, b=4, c=5):
 			return a,b,c
 
-		def echo(self, m):
-			return m
+		def sleep(self, n):
+			time.sleep(n)
+	FRONTEND_PORT	= 5010
+	BACKEND_PORT	= 5011
+	LOG_PORT		= 5012
 	
 	def setUp(self):
-		server = Server("tcp://*:8080","tcp://*:8081","tcp://*:8082")
-		server.start()
+		self.server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,"tcp://*:%s"%self.LOG_PORT)
+		self.server.start()
 
-		cool = ClassExposer("cool", "tcp://localhost:8081", ZeroBotTestCase.Cool())
-		cool.start()
-
+		self.abc = ClassExposer("abc", "tcp://localhost:%s"%self.BACKEND_PORT, self.Abc())
+		self.abc.start()
+		time.sleep(0.2)
+		
+		self.client = RemoteClient("client", "tcp://localhost:%s"%self.FRONTEND_PORT, "abc")
+		self.client.start()
 		time.sleep(0.2)
 
-	def test_remote(self):
-		remote_cool = RemoteClient("remote_cool", "tcp://localhost:8080", "cool")
-		remote_cool.start()
-		time.sleep(0.2)
+	def test_block(self):
+		self.assertEqual(self.client.ping(56,block=True), 56+42)
+		self.assertEqual(self.client.hello(block=True), "world")
+		self.assertEqual(self.client.hard_one(c=1,b=42,block=True), [3,42,1])
 
-		self.assertEqual(remote_cool.ping(56,block=True), 56+42)
-		self.assertEqual(remote_cool.hello(block=True), "world")
-		self.assertEqual(remote_cool.hard_one(c=1,b=42,block=True), [3,42,1])
+	def test_async(self):
+		self._setup_cb()
+		ev = self.client.ping(56, block=False, cb_fct=self._cb)
+		ev.wait()
+		self.assertIsNotNone(self.response_cb)
+		self.assertEqual(self.response_cb.data, 56+42)
+
+	def test_timeout(self):
+		self.assertRaises(ZeroBotTimeout, self.client.sleep, 100, timeout=0.5, block=True)
+		self._setup_cb()
+		ev = self.client.sleep(100, block=False, timeout=0.5, cb_fct=self._cb)
+		ev.wait()
+		self.assertTrue(self.response_cb.error_is_set())
+		self.assertEqual(self.response_cb.error['error'], 'timeout')
+
+
+	def _setup_cb(self):
+		self.response_cb = None
+	
+	def _cb(self, response):
+		self.response_cb = response
+	
+	def tearDown(self):
+		self.server.stop()
+		self.abc.stop()
+		self.client.stop()
+		time.sleep(1)
+		

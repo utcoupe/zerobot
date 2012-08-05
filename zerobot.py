@@ -7,11 +7,19 @@ import json
 import inspect
 import traceback
 import uuid
+import logging
+
+
+
 
 class ZeroBotException(Exception):
 	def __init__(self, err):
 		Exception.__init__(self, err['error'])
 		self.tb = err['tb']
+
+class ZeroBotTimeout(Exception):
+	pass
+
 
 class Request:
 	def __init__(self, uid, fct, args=[], kwargs={}):
@@ -57,6 +65,9 @@ class Response:
 		#print(msg)
 		return json.dumps(msg).encode()
 
+	def error_is_set(self):
+		return bool(self.error)
+
 	@staticmethod
 	def unpack(msg):
 		#print('Response.unpack', msg)
@@ -101,20 +112,38 @@ class AsyncClient(threading.Thread):
 		threading.Thread.__init__ (self)
 		self.identity = identity
 		self.ctx = ctx or zmq.Context()
+		self._ctx_is_mine = ctx is None
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
 		self.socket.connect(bind_addr)
-		print('Client %s started' % (self.identity))
+		logging.info('Client %s started', self.identity)
+		#print('Client %s started' % (self.identity))
 		self.setDaemon(True)
 		self._e_stop = threading.Event()
 
 	def run(self):
+		socket = self.socket
+		poll = zmq.Poller()
+		poll.register(socket, zmq.POLLIN)
+		
 		while not self._e_stop.is_set():
-			msg = self.socket.recv_multipart()
-			self._process(msg)
-			del msg
+			try:
+				sockets = dict(poll.poll(500))
+			except zmq.core.error.ZMQError as ex:
+				if not self._e_stop.is_set():
+					logging.error("Client %s get an error on poll : %s", self.identity, ex)
+			else:
+				if socket in sockets:
+					if sockets[socket] == zmq.POLLIN:
+						msg = socket.recv_multipart()
+						self._process(msg)
+						del msg
+
 		self.socket.close()
-		self.ctx.term()
+		if self._ctx_is_mine and not self.ctx.closed:
+			self.ctx.term()
+
+		logging.info("Client %s stopped", self.identity)
 
 	def _process(self, msg):
 		print('Client %s received %s' % (self.identity, msg))
@@ -184,6 +213,9 @@ class RemoteClient(AsyncClient):
 	def _process(self, msg):
 		#print('RemoteClient %s received: %s' % (self.identity, msg))
 		response = Response.unpack(msg[1])
+		self._process_response(response)
+
+	def _process_response(self, response):
 		if response.uid in self._resp_events:
 			self._resp_events[response.uid].set(response)
 			self._resp_events.pop(response.uid)
@@ -199,11 +231,24 @@ class RemoteClient(AsyncClient):
 		if block:
 			resp_ev.wait(timeout)
 			if not resp_ev.is_set():
-				raise Exception("Timeout")
+				raise ZeroBotTimeout("Timeout")
 			if resp_ev.response.error:
 				raise ZeroBotException(resp_ev.response.error)
 			return resp_ev.response.data
+		else:
+			if timeout:
+				self._set_async_timeout(uid, timeout)
+			return resp_ev
 
+	def _set_async_timeout(self, uuid, timeout):
+		t = threading.Timer(timeout, self._async_timeout, args=(uuid, timeout))
+		t.setDaemon(True)
+		t.start()
+	
+	def _async_timeout(self, uuid, timeout):
+		response = Response(uuid, {}, {'error': 'timeout', 'tb':''})
+		self._process_response(response)
+	
 	def __getattr__(self, name):
 		def auto_generated_remote_call(*args, block=True, timeout=None, cb_fct=None, uid=None, **kwargs):
 			return self._remote_call(name, args, kwargs, cb_fct, uid, block, timeout)
@@ -211,9 +256,10 @@ class RemoteClient(AsyncClient):
 
 
 class Server(threading.Thread):
-	def __init__(self, ft_bind_addr, bc_bind_addr, pb_bind_addr):
+	def __init__(self, ft_bind_addr=5000, bc_bind_addr=5001, pb_bind_addr=5002, ctx=None):
 		threading.Thread.__init__ (self)
-		self.ctx = zmq.Context()
+		self.ctx = ctx or zmq.Context()
+		self._ctx_is_mine = ctx is None
 		self.frontend = self.ctx.socket(zmq.ROUTER)
 		self.frontend.bind(ft_bind_addr)
 		self.backend = self.ctx.socket(zmq.ROUTER)
@@ -222,6 +268,9 @@ class Server(threading.Thread):
 		self.publisher.bind(pb_bind_addr)
 		self.setDaemon(True)
 		self._e_stop = threading.Event()
+		self._ft_addr = ft_bind_addr
+		self._bc_addr = bc_bind_addr
+		self._pb_addr = pb_bind_addr
 	
 	def run(self):
 		
@@ -229,36 +278,51 @@ class Server(threading.Thread):
 		poll = zmq.Poller()
 		poll.register(self.frontend, zmq.POLLIN)
 		poll.register(self.backend, zmq.POLLIN)
+
+		logging.info("Server ready")
+		logging.info("Listening\t%s", self._ft_addr)
+		logging.info("Backend\t%s", self._bc_addr)
+		logging.info("Publishing\t%s", self._pb_addr)
 		
 		while not self._e_stop.is_set():
-			sockets = dict(poll.poll())
-			if frontend in sockets:
-				if sockets[frontend] == zmq.POLLIN:
-					#print("frontend")
-					#id_from, id_to, msg = zhelpers.dump(frontend)
-					id_from, id_to, msg = frontend.recv_multipart()
-					#print('Frontend received %s' % ((id_from, id_to, msg),))
-					backend.send_multipart([id_to,id_from,msg])
-					publisher.send_multipart([id_from,id_to,msg])
-			if backend in sockets:
-				if sockets[backend] == zmq.POLLIN:
-					#print("backend")
-					#id_from,id_to,msg = zhelpers.dump(backend)
-					id_from,id_to,msg = backend.recv_multipart()
-					#print('Backend received %s' % (msg,))
-					frontend.send_multipart([id_to,id_from,msg])
-					publisher.send_multipart([id_from,id_to,msg])
+			try:
+				sockets = dict(poll.poll(500))
+			except zmq.core.error.ZMQError as ex:
+				if not self._e_stop.is_set():
+					logging.error("Server get an error on poll : %s", ex)
+			else:
+				if frontend in sockets:
+					if sockets[frontend] == zmq.POLLIN:
+						#print("frontend")
+						#id_from, id_to, msg = zhelpers.dump(frontend)
+						id_from, id_to, msg = frontend.recv_multipart()
+						#print('Frontend received %s' % ((id_from, id_to, msg),))
+						backend.send_multipart([id_to,id_from,msg])
+						publisher.send_multipart([id_from,id_to,msg])
+				if backend in sockets:
+					if sockets[backend] == zmq.POLLIN:
+						#print("backend")
+						#id_from,id_to,msg = zhelpers.dump(backend)
+						id_from,id_to,msg = backend.recv_multipart()
+						#print('Backend received %s' % (msg,))
+						frontend.send_multipart([id_to,id_from,msg])
+						publisher.send_multipart([id_from,id_to,msg])
 		
 		frontend.close()
 		backend.close()
 		publisher.close()
-		self.ctx.term()
+		if self._ctx_is_mine and not self.ctx.closed:
+			self.ctx.term()
+		logging.info("Server stopped.")
 
 	def stop(self):
 		self._e_stop.set()
 
 
 if __name__ == "__main__":
+
+	logging.basicConfig(level=-1000)
+	
 	server = Server("tcp://*:8080","tcp://*:8081","tcp://*:8082")
 	server.start()
 	time.sleep(1)
@@ -352,8 +416,13 @@ if __name__ == "__main__":
 	tot_reqs = N*N_REQ
 	average = ellapsed/tot_reqs
 	print('%s clients, %s reqs (tot:%sreqs) : %ss, average : %sms' % (N, N_REQ, tot_reqs, ellapsed, average*1000))
-	
-	#time.sleep(3)
-	#remote_cool.stop()
+
+	for i in range(N):
+		remotes[i].stop()
 	cool.stop()
 	server.stop()
+	
+	for i in range(N):
+		remotes[i].join()
+	cool.join()
+	server.join()
