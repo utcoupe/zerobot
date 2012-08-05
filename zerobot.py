@@ -116,22 +116,24 @@ class AsyncClient(threading.Thread):
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
 		self.socket.connect(bind_addr)
-		logging.info('Client %s started', self.identity)
 		#print('Client %s started' % (self.identity))
 		self.setDaemon(True)
 		self._e_stop = threading.Event()
+		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 
 	def run(self):
 		socket = self.socket
 		poll = zmq.Poller()
 		poll.register(socket, zmq.POLLIN)
 		
+		self.logger.info('%s started', self.identity)
+		
 		while not self._e_stop.is_set():
 			try:
 				sockets = dict(poll.poll(500))
 			except zmq.core.error.ZMQError as ex:
 				if not self._e_stop.is_set():
-					logging.error("Client %s get an error on poll : %s", self.identity, ex)
+					self.logger.error("Client %s get an error on poll : %s", self.identity, ex)
 			else:
 				if socket in sockets:
 					if sockets[socket] == zmq.POLLIN:
@@ -143,7 +145,7 @@ class AsyncClient(threading.Thread):
 		if self._ctx_is_mine and not self.ctx.closed:
 			self.ctx.term()
 
-		logging.info("Client %s stopped", self.identity)
+		self.logger.info("Client %s stopped", self.identity)
 
 	def _process(self, msg):
 		print('Client %s received %s' % (self.identity, msg))
@@ -256,7 +258,7 @@ class RemoteClient(AsyncClient):
 
 
 class Server(threading.Thread):
-	def __init__(self, ft_bind_addr=5000, bc_bind_addr=5001, pb_bind_addr=5002, ctx=None):
+	def __init__(self, ft_bind_addr="tcp://*:5000", bc_bind_addr="tcp://*:5001", pb_bind_addr="tcp://*:5002", ctx=None):
 		threading.Thread.__init__ (self)
 		self.ctx = ctx or zmq.Context()
 		self._ctx_is_mine = ctx is None
@@ -271,6 +273,7 @@ class Server(threading.Thread):
 		self._ft_addr = ft_bind_addr
 		self._bc_addr = bc_bind_addr
 		self._pb_addr = pb_bind_addr
+		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 	
 	def run(self):
 		
@@ -279,17 +282,17 @@ class Server(threading.Thread):
 		poll.register(self.frontend, zmq.POLLIN)
 		poll.register(self.backend, zmq.POLLIN)
 
-		logging.info("Server ready")
-		logging.info("Listening\t%s", self._ft_addr)
-		logging.info("Backend\t%s", self._bc_addr)
-		logging.info("Publishing\t%s", self._pb_addr)
+		self.logger.info("Server ready")
+		self.logger.info("Listening\t%s", self._ft_addr)
+		self.logger.info("Backend\t%s", self._bc_addr)
+		self.logger.info("Publishing\t%s", self._pb_addr)
 		
 		while not self._e_stop.is_set():
 			try:
 				sockets = dict(poll.poll(500))
 			except zmq.core.error.ZMQError as ex:
 				if not self._e_stop.is_set():
-					logging.error("Server get an error on poll : %s", ex)
+					self.logger.error("Server get an error on poll : %s", ex)
 			else:
 				if frontend in sockets:
 					if sockets[frontend] == zmq.POLLIN:
@@ -313,7 +316,7 @@ class Server(threading.Thread):
 		publisher.close()
 		if self._ctx_is_mine and not self.ctx.closed:
 			self.ctx.term()
-		logging.info("Server stopped.")
+		self.logger.info("Server stopped.")
 
 	def stop(self):
 		self._e_stop.set()
@@ -342,7 +345,7 @@ if __name__ == "__main__":
 
 	cool = ClassExposer("cool", "tcp://localhost:8081", Cool())
 	cool.start()
-	"""
+	
 	remote_cool = RemoteClient("remote_cool", "tcp://localhost:8080", "cool")
 	remote_cool.start()
 
@@ -351,6 +354,7 @@ if __name__ == "__main__":
 	while 1:
 		print(remote_cool.ping(56,block=True))
 		time.sleep(1)
+	"""
 	print(remote_cool.ping(56,block=True))
 	print(remote_cool.ping(56,block=True))
 	print(remote_cool.help(block=True))
@@ -362,67 +366,3 @@ if __name__ == "__main__":
 	except ZeroBotException as ex:
 		print(ex)
 	"""
-	
-	
-	import sys
-	N,N_REQ,LEN_MSG,ASYNC = sys.argv[1:]
-	N = int(N)
-	N_REQ = int(N_REQ)
-	LEN_MSG = int(LEN_MSG)
-	MSG="1"*LEN_MSG
-	ctx = zmq.Context()
-
-	remotes = []
-	for i in range(N):
-		c = RemoteClient("remote_cool-%s"%i, "tcp://localhost:8080", "cool", ctx=ctx)
-		c.start()
-		remotes.append(c)
-	time.sleep(0.5)
-	
-	class Cb:
-		def __init__(self):
-			self.n = 0
-			self.event = threading.Event()
-		def cb(self, response):
-			self.n += 1
-			if self.n == N_REQ: self.event.set()
-	
-	def benchmark(i,c):
-
-		cb = Cb()
-		block = ASYNC != 'async'
-
-		start=time.time()
-		for _ in range(N_REQ):
-			c.test(c=1,b=2,a=3, block=block, cb_fct=cb.cb)
-		
-		if not block:
-			cb.event.wait(0.002*N*N_REQ)
-			if not cb.event.is_set():
-				print("#%s drops %s packets" % (i, N_REQ-cb.n))
-
-	threads = []
-	for i in range(N):
-		t = threading.Thread(target=benchmark, args=(i,remotes[i],))
-		threads.append(t)
-	
-	start = time.time()
-	for i in range(N):
-		threads[i].start()
-	
-	for i in range(N):
-		threads[i].join()
-	ellapsed = time.time()-start
-	tot_reqs = N*N_REQ
-	average = ellapsed/tot_reqs
-	print('%s clients, %s reqs (tot:%sreqs) : %ss, average : %sms' % (N, N_REQ, tot_reqs, ellapsed, average*1000))
-
-	for i in range(N):
-		remotes[i].stop()
-	cool.stop()
-	server.stop()
-	
-	for i in range(N):
-		remotes[i].join()
-	cool.join()
-	server.join()
