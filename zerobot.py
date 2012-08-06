@@ -165,6 +165,7 @@ class AsyncClient(threading.Thread):
 
 class ClassExposerWorker(threading.Thread):
 	def __init__(self, exposed_obj, bind_addr, remote_id, request, ctx=None):
+		threading.Thread.__init__(self)
 		self.exposed_obj = exposed_obj
 		self.ctx = ctx or zmq.Context()
 		self._ctx_is_mine = ctx is None
@@ -207,24 +208,64 @@ class ClassExposerWorker(threading.Thread):
 		
 		
 
-class ClassExposer(AsyncClient):
+class ClassExposer:
 	"""
 	Permet d'exposer les méthodes d'une classe à distance.
 	"""
-	def __init__(self, identity, bind_addr, exposed_obj, ctx=None):
+	def __init__(self, identity, bind_addr, exposed_obj, ctx=None, io_loop=None):
 		"""
 		@param {str} identity nom unique du client
 		@param {str} bind_addr l'adresse du backend du serveur
 		@param {Object} une instance de l'objet à exposer
 		@param {zmq.Context} zmq context
 		"""
-		super(ClassExposer, self).__init__(identity, bind_addr, ctx)
+		self.identity = identity
+		self.ioloop = io_loop or ioloop.IOLoop.instance()
+		self.ctx = ctx or zmq.Context()
+		self._ctx_is_mine = ctx is None
+		self.socket = self.ctx.socket(zmq.DEALER)
+		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
+		self.bind_addr = bind_addr
+		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 		self.exposed_obj = exposed_obj
 		self.backend = self.ctx.socket(zmq.DEALER)
 		self.backend.bind("inproc://"+self.identity)
-		self.poll.register(self.backend, zmq.POLLIN)
+		self._running = False
 
-	def _process(self, msg):
+	def running(self):
+		return self._running
+	
+	def start(self):
+		if not self.running():
+			self.logger.info('%s started', self.identity)
+			self.socket.connect(self.bind_addr)
+
+			self.ioloop.add_handler(self.socket, self.frontend_handler, ioloop.IOLoop.READ)
+			self.ioloop.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
+
+			if not self.ioloop.running():
+				t = threading.Thread(target=self.ioloop.start)
+				t.setDaemon(True)
+				t.start()
+			
+			self._running = True
+
+	def stop(self):
+		self.socket.close()
+		self.backend.close()
+		
+		if self._ctx_is_mine and not self.ctx.closed:
+			self.ctx.term()
+		
+		self.ioloop.remove_handler(self.socket)
+		
+		self._running = False
+
+	def backend_handler(self, fd, _ev):
+		msg = fd.recv_multipart()
+		self.socket.send_multipart(msg)
+
+	def frontend_handler(self, fd, _ev):
 		"""
 		Le message reçu est en 2 parties :
 		1. remote_id
@@ -242,8 +283,12 @@ class ClassExposer(AsyncClient):
 		La fonction va unpack le message et la request pour extraire la fonction à appeller.
 		"""
 		#print('ClassExposer %s received: %s' % (self.identity, msg))
+		msg = fd.recv_multipart()
 		remote_id = msg[0]
 		request = Request.unpack(msg[1])
+		worker = ClassExposerWorker(self.exposed_obj, 'inproc://'+self.identity, remote_id, request, ctx=self.ctx)
+		worker.start()
+		return
 		err = None
 		r = None
 		try:
@@ -423,7 +468,7 @@ if __name__ == "__main__":
 
 	logging.basicConfig(level=-1000)
 	
-	server = Server("tcp://*:8080","tcp://*:8081","tcp://*:8082")
+	server = Server("tcp://*:8080","tcp://*:8081","tcp://*:8082",io_loop=ioloop.IOLoop())
 	server.start()
 	time.sleep(1)
 	
@@ -440,7 +485,7 @@ if __name__ == "__main__":
 		def echo(self, m):
 			return m
 
-	cool = ClassExposer("cool", "tcp://localhost:8081", Cool())
+	cool = ClassExposer("cool", "tcp://localhost:8081", Cool(), io_loop=ioloop.IOLoop())
 	cool.start()
 	
 	remote_cool = RemoteClient("remote_cool", "tcp://localhost:8080", "cool")
