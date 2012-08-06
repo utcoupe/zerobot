@@ -1,4 +1,5 @@
 import zmq
+from zmq.eventloop import ioloop
 import zhelpers
 import threading
 import time
@@ -121,15 +122,16 @@ class AsyncClient(threading.Thread):
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
 		self.socket.connect(bind_addr)
-		#print('Client %s started' % (self.identity))
+		self.poll = zmq.Poller()
+		self.poll.register(self.socket, zmq.POLLIN)
 		self.setDaemon(True)
 		self._e_stop = threading.Event()
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 
 	def run(self):
 		socket = self.socket
-		poll = zmq.Poller()
-		poll.register(socket, zmq.POLLIN)
+
+		poll = self.poll
 		
 		self.logger.info('%s started', self.identity)
 		
@@ -160,7 +162,51 @@ class AsyncClient(threading.Thread):
 		
 	def stop(self):
 		self._e_stop.set()
-	
+
+class ClassExposerWorker(threading.Thread):
+	def __init__(self, exposed_obj, bind_addr, remote_id, request, ctx=None):
+		self.exposed_obj = exposed_obj
+		self.ctx = ctx or zmq.Context()
+		self._ctx_is_mine = ctx is None
+		self.remote_id = remote_id
+		self.request = request
+		self.socket = self.ctx.socket(zmq.DEALER)
+		self.socket.connect(bind_addr)
+
+	def run(self):
+		remote_id, request = self.remote_id, self.request
+		err = None
+		r = None
+		try:
+			if request.fct=='help':
+				f = self.help
+			elif request.fct=='stop':
+				f = self.stop
+			else:
+				f = getattr(self.exposed_obj, request.fct)
+				if request.fct.startswith('_'):
+					raise Exception("Method %s is protected" % request.fct)
+			args,kwargs = request.args, request.kwargs
+			if args and kwargs:
+				r = f(*args, **kwargs)
+			elif kwargs:
+				r = f(**kwargs)
+			else:
+				r = f(*args)
+		except Exception as ex:
+			err = {}
+			err['tb'] = traceback.format_exc()
+			err['error'] = str(ex)
+		response = Response(request.uid, r, err)
+		self.socket.send_multipart([remote_id, response.pack()])
+		
+		self.socket.close()
+		if self._ctx_is_mine and not self.ctx.closed:
+			self.ctx.term()
+		
+		
+		
+
 class ClassExposer(AsyncClient):
 	"""
 	Permet d'exposer les méthodes d'une classe à distance.
@@ -174,6 +220,9 @@ class ClassExposer(AsyncClient):
 		"""
 		super(ClassExposer, self).__init__(identity, bind_addr, ctx)
 		self.exposed_obj = exposed_obj
+		self.backend = self.ctx.socket(zmq.DEALER)
+		self.backend.bind("inproc://"+self.identity)
+		self.poll.register(self.backend, zmq.POLLIN)
 
 	def _process(self, msg):
 		"""
@@ -296,69 +345,78 @@ class RemoteClient(AsyncClient):
 		return auto_generated_remote_call
 
 
-class Server(threading.Thread):
-	def __init__(self, ft_bind_addr="tcp://*:5000", bc_bind_addr="tcp://*:5001", pb_bind_addr="tcp://*:5002", ctx=None):
-		threading.Thread.__init__ (self)
+class Server():
+	def __init__(self, ft_bind_addr="tcp://*:5000", bc_bind_addr="tcp://*:5001", pb_bind_addr="tcp://*:5002", ctx=None, io_loop=None):
 		self.ctx = ctx or zmq.Context()
+		self.ioloop = io_loop or ioloop.IOLoop.instance()
 		self._ctx_is_mine = ctx is None
+		# création ds sockets
 		self.frontend = self.ctx.socket(zmq.ROUTER)
-		self.frontend.bind(ft_bind_addr)
 		self.backend = self.ctx.socket(zmq.ROUTER)
-		self.backend.bind(bc_bind_addr)
 		self.publisher = self.ctx.socket(zmq.PUB)
-		self.publisher.bind(pb_bind_addr)
-		self.setDaemon(True)
-		self._e_stop = threading.Event()
+		# sauvegarde des adresses
 		self._ft_addr = ft_bind_addr
 		self._bc_addr = bc_bind_addr
 		self._pb_addr = pb_bind_addr
+		# logger
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
+		# variables d'état
+		self._running = False
 	
-	def run(self):
-		
-		frontend,backend,publisher = self.frontend,self.backend,self.publisher
-		poll = zmq.Poller()
-		poll.register(self.frontend, zmq.POLLIN)
-		poll.register(self.backend, zmq.POLLIN)
+	def frontend_handler(self, _fd, _ev):
+		#print("frontend")
+		#id_from, id_to, msg = zhelpers.dump(frontend)
+		id_from, id_to, msg = self.frontend.recv_multipart()
+		#print('Frontend received %s' % ((id_from, id_to, msg),))
+		self.backend.send_multipart([id_to,id_from,msg])
+		self.publisher.send_multipart([id_from,id_to,msg])
 
-		self.logger.info("Server ready")
-		self.logger.info("Listening\t%s", self._ft_addr)
-		self.logger.info("Backend\t%s", self._bc_addr)
-		self.logger.info("Publishing\t%s", self._pb_addr)
+	def backend_handler(self, _fd, _ev):
+		#print("backend")
+		#id_from, id_to, msg = zhelpers.dump(backend)
+		id_from, id_to, msg = self.backend.recv_multipart()
+		#print('Backend received %s' % (msg,))
+		self.frontend.send_multipart([id_to,id_from,msg])
+		self.publisher.send_multipart([id_from,id_to,msg])
+	
+	def start(self):
+
+		if not self.running():
+			self.frontend.bind(self._ft_addr)
+			self.backend.bind(self._bc_addr)
+			self.publisher.bind(self._pb_addr)
+
+			self.ioloop.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
+			self.ioloop.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
+
+			if not self.ioloop.running():
+				t = threading.Thread(target=self.ioloop.start)
+				t.setDaemon(True)
+				t.start()
+			
+			self.logger.info("Server ready")
+			self.logger.info("Listening\t%s", self._ft_addr)
+			self.logger.info("Backend\t%s", self._bc_addr)
+			self.logger.info("Publishing\t%s", self._pb_addr)
 		
-		while not self._e_stop.is_set():
-			try:
-				sockets = dict(poll.poll(500))
-			except zmq.core.error.ZMQError as ex:
-				if not self._e_stop.is_set():
-					self.logger.error("Server get an error on poll : %s", ex)
-			else:
-				if frontend in sockets:
-					if sockets[frontend] == zmq.POLLIN:
-						#print("frontend")
-						#id_from, id_to, msg = zhelpers.dump(frontend)
-						id_from, id_to, msg = frontend.recv_multipart()
-						#print('Frontend received %s' % ((id_from, id_to, msg),))
-						backend.send_multipart([id_to,id_from,msg])
-						publisher.send_multipart([id_from,id_to,msg])
-				if backend in sockets:
-					if sockets[backend] == zmq.POLLIN:
-						#print("backend")
-						#id_from,id_to,msg = zhelpers.dump(backend)
-						id_from,id_to,msg = backend.recv_multipart()
-						#print('Backend received %s' % (msg,))
-						frontend.send_multipart([id_to,id_from,msg])
-						publisher.send_multipart([id_from,id_to,msg])
-		
-		frontend.close()
-		backend.close()
-		publisher.close()
-		if self._ctx_is_mine and not self.ctx.closed:
-			self.ctx.term()
-		self.logger.info("Server stopped.")
+			self._running = True
+
+	def running(self):
+		return self._running
 
 	def stop(self):
-		self._e_stop.set()
+		self.frontend.close()
+		self.backend.close()
+		self.publisher.close()
+		if self._ctx_is_mine and not self.ctx.closed:
+			self.ctx.term()
+
+		self.ioloop.remove_handler(self.frontend)
+		self.ioloop.remove_handler(self.backend)
+
+		self._running = False
+		
+		self.logger.info("Server stopped.")
 
 
 if __name__ == "__main__":
