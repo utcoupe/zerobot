@@ -160,11 +160,32 @@ class Client(Base):
 		self.socket.send_multipart(msg)
 
 class ClassExposer(Client):
+	"""
+	Permet d'exposer les méthodes d'une classe à distance. Les requêtes sont
+	traitées séquentiellement, pour un traitement de requêtes en parallèle
+	voir la class AsyncClassExposer.
+	"""
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
 		Client.__init__(self, identity, conn_addr, ctx)
 		self.exposed_obj = exposed_obj
 
 	def _process(self, fd, _ev):
+		"""
+		Le message reçu est en 2 parties :
+		1. remote_id
+		2. packed request
+		
+		Une Request est un dictionnaire:
+		{@code
+			{
+				uid: 	{str} unique id qu'il faudra renvoyer
+				fct:	{str} la fonction à appeller
+				args:	{list} les arguments
+				kwargs:	{dict} les arguments només
+			}
+		}
+		La fonction va unpack le message et la request pour extraire la fonction à appeller.
+		"""
 		msg = fd.recv_multipart()
 		self.logger.debug("worker %s recv %s", self.identity, msg)
 		remote_id, packed_request = msg
@@ -247,7 +268,9 @@ class FdLoop:
 
 class AsyncClassExposer(Base):
 	"""
-	Permet d'exposer les méthodes d'une classe à distance.
+	Permet d'exposer les méthodes d'une classe à distance. Permet en plus
+	de lancer plusieurs méthodes bloquantes de la classe simultanément.
+	Des workers sont utilisés, chaque worker exécute une requête<=>méthode de la class exposée.
 	"""
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None, init_workers=5, max_workers=50, min_workers=None, dynamic_workers=False):
 		"""
@@ -255,6 +278,10 @@ class AsyncClassExposer(Base):
 		@param {str} conn_addr l'adresse du backend du serveur
 		@param {Object} une instance de l'objet à exposer
 		@param {zmq.Context} zmq context
+		@param {int|5} init_workers le nombre initial de workers <=> requêtes simultanées possibles
+		@param {int|50} max_workers nombre maximum de requêtes simultanées
+		@param {int} min_workers si non précisé est égale à init_workers
+		@param {bool|False} dynamic_workers autorisé l'ajout/suppression de workers automatiquement
 		"""
 		super(AsyncClassExposer,self).__init__(identity, ctx)
 		self.exposed_obj = exposed_obj
@@ -339,22 +366,6 @@ class AsyncClassExposer(Base):
 		self.backend.send_multipart(new_msg)
 			
 	def frontend_handler(self, fd, _ev):
-		"""
-		Le message reçu est en 2 parties :
-		1. remote_id
-		2. packed request
-		
-		Une Request est un dictionnaire:
-		{@code
-			{
-				uid: 	{str} unique id qu'il faudra renvoyer
-				fct:	{str} la fonction à appeller
-				args:	{list} les arguments
-				kwargs:	{dict} les arguments només
-			}
-		}
-		La fonction va unpack le message et la request pour extraire la fonction à appeller.
-		"""
 		#print('ClassExposer %s received: %s' % (self.identity, msg))
 		msg = fd.recv_multipart()
 		self.logger.debug("frontend recv %s", msg)
