@@ -192,7 +192,7 @@ class ClassExposer(Client):
 			err['tb'] = traceback.format_exc()
 			err['error'] = str(ex)
 		response = Response(request.uid, r, err)
-		self.socket.send_multipart([remote_id, response.pack()])
+		self.send_multipart([remote_id, response.pack()])
 
 	def __repr__(self):
 		return "ClassExposerWorker(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
@@ -414,7 +414,7 @@ class RemoteClient(Client):
 			resp_ev.cb_fct = cb_fct
 		self._resp_events[uid] = resp_ev
 		request = Request(uid, fct, args, kwargs)
-		self.socket.send_multipart([self.remote_id.encode(), request.pack()])
+		self.send_multipart([self.remote_id.encode(), request.pack()])
 		if block:
 			resp_ev.wait(timeout)
 			if not resp_ev.is_set():
