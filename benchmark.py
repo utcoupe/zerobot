@@ -34,10 +34,10 @@ class Cool:
 		time.sleep(1)
 		return "ok"
 
-cool = zerobot.AsyncClassExposer("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=False)
-cool.start(False)
-#cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool())
+#cool = zerobot.AsyncClassExposer("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=False)
 #cool.start(False)
+cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool())
+cool.start(False)
 
 class ClientBenchmark(threading.Thread):
 	def __init__(self, identity, n_reqs, block):
