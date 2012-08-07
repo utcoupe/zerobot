@@ -106,19 +106,22 @@ class ResponseEvent:
 
 	def is_set(self):
 		return self._ev.is_set()
-		
 
-class AsyncClient(threading.Thread):
+class Base(threading.Thread):
+	def __init__(self, identity, ctx=None):
+		threading.Thread.__init__ (self)
+		self.identity = identity
+		self.ctx = ctx or zmq.Context()
+		self._ctx_is_mine = ctx is None
+
+class Client(Base):
 	def __init__(self, identity, conn_addr, ctx=None):
 		"""
 		@param {str} identity identité du client
 		@param {str} conn_addr adresse sur laquelle se connecter
 		@param {zmq.Context} zmq context
 		"""
-		threading.Thread.__init__ (self)
-		self.identity = identity
-		self.ctx = ctx or zmq.Context()
-		self._ctx_is_mine = ctx is None
+		super(Client, self).__init__(identity, ctx)
 		self.conn_addr = conn_addr
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
@@ -159,14 +162,14 @@ class AsyncClient(threading.Thread):
 		"""
 		méthode appellée à chaque reception d'un message
 		"""
-		self.logger.warn("method AsyncClient._process must be override")
+		self.logger.warn("method Client._process must be override")
 		
 	def stop(self):
 		self._e_stop.set()
 
-class ClassExposerWorker(AsyncClient):
+class ClassExposer(Client):
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
-		AsyncClient.__init__(self, identity, conn_addr, ctx)
+		Client.__init__(self, identity, conn_addr, ctx)
 		self.exposed_obj = exposed_obj
 
 	def _process(self, msg):
@@ -203,11 +206,11 @@ class ClassExposerWorker(AsyncClient):
 		
 
 class FdLoop:
-	def __init__(self, l_fd_n_cb):
+	def __init__(self, d_fd_n_cb):
 		self.poll = zmq.Poller()
 		self._e_stop = threading.Event()
 		self._e_start = threading.Event()
-		self.fd_n_cb = l_fd_n_cb
+		self._fd_handlers = d_fd_n_cb
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 		self._exit = False
 		t = threading.Thread(target=self.loop)
@@ -222,7 +225,7 @@ class FdLoop:
 		if not self.running:
 			self._e_start.set()
 			self._e_stop.clear()
-			for fd,_cb in self.fd_n_cb:
+			for fd in self._fd_handlers:
 				self.poll.register(fd, zmq.POLLIN)
 
 	def stop(self):
@@ -246,54 +249,59 @@ class FdLoop:
 					if not self._e_stop.is_set():
 						self.logger.error("Error on poll : %s", ex, exc_info=1)
 				else:
-					for fd,cb in self.fd_n_cb:
-						if fd in sockets:
-							cb(fd, sockets[fd])
+					for fd in sockets:
+						self._fd_handlers[fd](fd, sockets[fd])
 
-class ClassExposer:
+class AsyncClassExposer:
 	"""
 	Permet d'exposer les méthodes d'une classe à distance.
 	"""
-	def __init__(self, identity, bind_addr, exposed_obj, ctx=None, init_workers=5, max_workers=50, min_workers=None, dynamic_workers=True):
+	def __init__(self, identity, conn_addr, exposed_obj, ctx=None, init_workers=5, max_workers=50, min_workers=None, dynamic_workers=False):
 		"""
 		@param {str} identity nom unique du client
-		@param {str} bind_addr l'adresse du backend du serveur
+		@param {str} conn_addr l'adresse du backend du serveur
 		@param {Object} une instance de l'objet à exposer
 		@param {zmq.Context} zmq context
 		"""
 		self.identity = identity
 		self.ioloop = ioloop.IOLoop()
-		self.ctx = ctx or zmq.Context()
-		self._ctx_is_mine = ctx is None
-		self.frontend = self.ctx.socket(zmq.DEALER)
-		self.frontend.setsockopt(zmq.IDENTITY, self.identity.encode())
-		self.bind_addr = bind_addr
-		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 		self.exposed_obj = exposed_obj
-		self.backend = self.ctx.socket(zmq.ROUTER)
-		self.backend_addr = "inproc://"+self.identity
-		self.backend.bind(self.backend_addr)
-		self._running = False
 		self.min_workers = min_workers or init_workers
 		self.max_workers = max_workers
 		self.dynamic_workers = dynamic_workers
+		self.ctx = ctx or zmq.Context()
+		self._ctx_is_mine = ctx is None
+		# socket recevant les requetes
+		self.frontend = self.ctx.socket(zmq.DEALER)
+		self.frontend.setsockopt(zmq.IDENTITY, self.identity.encode())
+		self.conn_addr = conn_addr
+		self.frontend.connect(self.conn_addr)
+		# socket pour les workers
+		self.backend = self.ctx.socket(zmq.ROUTER)
+		self.backend_addr = "inproc://"+self.identity
+		self.backend.bind(self.backend_addr)
+		# workers
 		self._workers = {}
 		self._free_workers = []
 		for _ in range(init_workers):
 			self.add_worker()
-		self._e_stop = threading.Event()
-		"""self.backend_loop = FdLoop([(self.backend, self.backend_handler)])
-		self.frontend_loop = FdLoop([(self.frontend, self.frontend_handler)])"""
-		self._unprocess_msg = []
 		self._timeout_can_reduce_workers = 0
+		#self.loop = FdLoop({self.backend: self.backend_handler, self.frontend: self.frontend_handler})
+		# msg queue
+		self._unprocess_msg = queue.deque()
+		# logger
+		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
+		self._running = False
+		# bin fd handlers
+		self.ioloop.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
+		self.ioloop.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
 
 	def add_worker(self):
 		worker_id = "Worker-%s-%s" % (self.identity, uuid.uuid1())
-		worker = ClassExposerWorker(worker_id, self.backend_addr, self.exposed_obj, ctx=self.ctx)
+		worker = ClassExposer(worker_id, self.backend_addr, self.exposed_obj, ctx=self.ctx)
 		worker.start()
 		self._free_workers.append(worker_id)
 		self._workers[worker_id] = worker
-		
 	
 	def running(self):
 		return self._running
@@ -301,35 +309,31 @@ class ClassExposer:
 	def start(self):
 		if not self.running():
 			self.logger.info('%s started', self.identity)
-			self.frontend.connect(self.bind_addr)
 			"""
 			self.backend_loop.start()
 			self.frontend_loop.start()
 			"""
-			self.ioloop.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
-			self.ioloop.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
 
 			if not self.ioloop.running():
-				t = threading.Thread(target=self.ioloop.start)
+				t = threading.Thread(target=self.ioloop.start, name="IOLoop-%s"%self)
+				#t = threading.Thread(target=self.loop.start, name="FdLoop-%s"%self)
 				t.setDaemon(True)
 				t.start()
 			
 			self._running = True
 
 	def stop(self):
-		"""
-		self.backend_loop.stop()
-		self.frontend_loop.stop()
-		"""
 		self.ioloop.stop()
+		#self.loop.stop()
 		time.sleep(0.05)
 		
 		for worker in self._workers.values():
 			worker.stop()
 			
+		
 		self.frontend.close()
 		self.backend.close()
-		
+		self.ioloop.close()
 		if self._ctx_is_mine and not self.ctx.closed:
 			self.ctx.term()
 		
@@ -346,12 +350,6 @@ class ClassExposer:
 		self.frontend.send_multipart(msg)
 
 	def consume_unprocess_msg(self):
-		def worker_filter(worker_id):
-			if not self._unprocess_msg:
-				return True
-			self.send_to_worker(worker_id, self._unprocess_msg.pop())
-			return False
-
 		# ajouter des workers si on galère trop
 		if self.dynamic_workers:
 			n_workers = len(self._workers)
@@ -368,7 +366,10 @@ class ClassExposer:
 					self._timeout_can_reduce_workers = time.time()+10
 
 		# envoyer le plus de messages possible aux workers
-		self._free_workers = list(filter(worker_filter, self._free_workers))
+		while self._unprocess_msg and self._free_workers:
+			msg = self._unprocess_msg.popleft()
+			worker_id = self._free_workers.pop()
+			self.send_to_worker(worker_id, msg)
 
 		# retirer des workers si on en a trop
 		if self.dynamic_workers:
@@ -379,7 +380,6 @@ class ClassExposer:
 						self.add_worker()
 					self._timeout_can_reduce_workers = time.time()+10
 					self.logger.info("%s go to %s workers", self.identity, len(self._workers))
-			
 	
 	def send_to_worker(self, worker_id, msg):
 		new_msg = [worker_id.encode()]+msg
@@ -422,7 +422,10 @@ class ClassExposer:
 			r = dict(inspect.getfullargspec(getattr(self.exposed_obj,method))._asdict())
 		return r
 
-class RemoteClient(AsyncClient):
+	def __repr__(self):
+		return "ClassExposer(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
+
+class RemoteClient(Client):
 	"""
 	Permet de faire des appels à une classe distante
 	"""
@@ -555,6 +558,7 @@ class Server():
 		self.frontend.close()
 		self.backend.close()
 		self.publisher.close()
+		self.ioloop.close()
 		
 		if self._ctx_is_mine and not self.ctx.closed:
 			self.ctx.term()
