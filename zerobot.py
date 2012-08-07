@@ -156,6 +156,9 @@ class Client(Base):
 	def _process(self, fd, ev):
 		self.logger.warn("Client._process must be override")
 
+	def send_multipart(self, msg):
+		self.socket.send_multipart(msg)
+
 class ClassExposer(Client):
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
 		Client.__init__(self, identity, conn_addr, ctx)
