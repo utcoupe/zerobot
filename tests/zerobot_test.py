@@ -5,6 +5,8 @@ import time
 
 from zerobot import *
 
+import logging
+#logging.basicConfig(level=-1000)
 
 class RequestTestCase(unittest.TestCase):
 	def setUp(self):
@@ -61,16 +63,22 @@ class RemoteTestCase(unittest.TestCase):
 	LOG_PORT		= 5012
 	
 	def setUp(self):
-		self.server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,"tcp://*:%s"%self.LOG_PORT)
-		self.server.start()
+		#print("setup")
+		try:
+			self.server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,"tcp://*:%s"%self.LOG_PORT)
+			self.server.start()
 
-		self.abc = ClassExposer("abc", "tcp://localhost:%s"%self.BACKEND_PORT, self.Abc())
-		self.abc.start()
-		time.sleep(0.2)
-		
-		self.client = RemoteClient("client", "tcp://localhost:%s"%self.FRONTEND_PORT, "abc")
-		self.client.start()
-		time.sleep(0.2)
+			self.abc = ClassExposer("abc", "tcp://localhost:%s"%self.BACKEND_PORT, self.Abc(), ctx=zmq.Context(11))
+			self.abc.start()
+			time.sleep(0.2)
+			
+			self.client = RemoteClient("client", "tcp://localhost:%s"%self.FRONTEND_PORT, "abc")
+			self.client.start()
+			time.sleep(0.2)
+		except Exception as ex:
+			print("Error on setup")
+			print(ex)
+		#print("end setup")
 
 	def test_block(self):
 		self.assertEqual(self.client.ping(56,block=True), 56+42)
@@ -78,11 +86,15 @@ class RemoteTestCase(unittest.TestCase):
 		self.assertEqual(self.client.hard_one(c=1,b=42,block=True), [3,42,1])
 
 	def test_async(self):
+		# test de la fonctionnalité async côté client
 		self._setup_cb()
 		ev = self.client.ping(56, block=False, cb_fct=self._cb)
 		ev.wait()
 		self.assertIsNotNone(self.response_cb)
 		self.assertEqual(self.response_cb.data, 56+42)
+		# test de la fonctionnalité async côté ClassExposer
+		self.client.sleep(100, block=False, cb_fct=lambda x: x)
+		self.assertEqual(self.client.ping(56, block=True), 56+42)
 
 	def test_timeout(self):
 		self.assertRaises(ZeroBotTimeout, self.client.sleep, 100, timeout=0.5, block=True)
@@ -100,8 +112,10 @@ class RemoteTestCase(unittest.TestCase):
 		self.response_cb = response
 	
 	def tearDown(self):
+		#print("tearDown")
 		self.server.stop()
 		self.abc.stop()
 		self.client.stop()
-		time.sleep(1)
+		time.sleep(0.1)
+		#print("end tearDown")
 		

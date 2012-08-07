@@ -7,10 +7,10 @@ import sys
 import threading
 import time
 import logging
-
-#logging.basicConfig(level=-1000)
+log_lvl = int(sys.argv[1]) if len(sys.argv) >= 2 else 20
+logging.basicConfig(level=log_lvl)
 	
-server = zerobot.Server("tcp://*:8080","tcp://*:8081","tcp://*:8082")
+server = zerobot.Server("tcp://*:8000","tcp://*:8001","tcp://*:8002")
 server.start()
 time.sleep(1)
 
@@ -27,13 +27,17 @@ class Cool:
 	def echo(self, m):
 		return m
 
-cool = zerobot.ClassExposer("cool", "tcp://localhost:8081", Cool())
+	def sleep(self, n):
+		time.sleep(1)
+		return "ok"
+
+cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool(), dynamic_workers=True)
 cool.start()
 
 class ClientBenchmark(threading.Thread):
-	def __init__(self, identity, ctx, n_reqs, block):
+	def __init__(self, identity, n_reqs, block):
 		threading.Thread.__init__(self)
-		self.client = zerobot.RemoteClient(identity, "tcp://localhost:8080", "cool", ctx=ctx)
+		self.client = zerobot.RemoteClient(identity, "tcp://localhost:8000", "cool")
 		self.n_reqs = n_reqs
 		self.block = block
 		self.n = 0
@@ -46,7 +50,12 @@ class ClientBenchmark(threading.Thread):
 		kwargs = {'c':'0'*100,'b':'2'*100,'a':'3'*100}
 		cb = None if self.block else self.cb
 		
-		for _ in range(self.n_reqs):
+		for i in range(self.n_reqs):
+			"""if i%2:
+				self.client.test(block=self.block, cb_fct=cb, **kwargs)
+			else:
+				self.client.sleep(1, block=self.block, cb_fct=cb)
+			"""
 			self.client.test(block=self.block, cb_fct=cb, **kwargs)
 
 		if not self.block:
@@ -62,12 +71,11 @@ class ClientBenchmark(threading.Thread):
 		if self.n == self.n_reqs: self.event.set()
 
 def benchmark(nb_clients, nb_reqs, msg, block):
-	
-	ctx = zmq.Context()
+
 
 	clients = []
 	for i in range(nb_clients):
-		client = ClientBenchmark("remote-%s"%i, ctx, nb_reqs, block)
+		client = ClientBenchmark("remote-%s"%i, nb_reqs, block)
 		clients.append(client)
 	
 	start = time.time()

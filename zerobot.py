@@ -9,7 +9,7 @@ import inspect
 import traceback
 import uuid
 import logging
-
+import queue
 
 
 
@@ -109,19 +109,20 @@ class ResponseEvent:
 		
 
 class AsyncClient(threading.Thread):
-	def __init__(self, identity, bind_addr, ctx=None):
+	def __init__(self, identity, conn_addr, ctx=None):
 		"""
 		@param {str} identity identité du client
-		@param {str} bind_addr adresse sur laquelle se connecter
+		@param {str} conn_addr adresse sur laquelle se connecter
 		@param {zmq.Context} zmq context
 		"""
 		threading.Thread.__init__ (self)
 		self.identity = identity
 		self.ctx = ctx or zmq.Context()
 		self._ctx_is_mine = ctx is None
+		self.conn_addr = conn_addr
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
-		self.socket.connect(bind_addr)
+		self.socket.connect(conn_addr)
 		self.poll = zmq.Poller()
 		self.poll.register(self.socket, zmq.POLLIN)
 		self.setDaemon(True)
@@ -140,7 +141,7 @@ class AsyncClient(threading.Thread):
 				sockets = dict(poll.poll(500))
 			except zmq.core.error.ZMQError as ex:
 				if not self._e_stop.is_set():
-					self.logger.error("Client %s get an error on poll : %s", self.identity, ex)
+					self.logger.error("Client %s get an error on poll : %s", self.identity, ex, exc_info=1)
 			else:
 				if socket in sockets:
 					if sockets[socket] == zmq.POLLIN:
@@ -163,19 +164,15 @@ class AsyncClient(threading.Thread):
 	def stop(self):
 		self._e_stop.set()
 
-class ClassExposerWorker(threading.Thread):
-	def __init__(self, exposed_obj, bind_addr, remote_id, request, ctx=None):
-		threading.Thread.__init__(self)
+class ClassExposerWorker(AsyncClient):
+	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
+		AsyncClient.__init__(self, identity, conn_addr, ctx)
 		self.exposed_obj = exposed_obj
-		self.ctx = ctx or zmq.Context()
-		self._ctx_is_mine = ctx is None
-		self.remote_id = remote_id
-		self.request = request
-		self.socket = self.ctx.socket(zmq.DEALER)
-		self.socket.connect(bind_addr)
 
-	def run(self):
-		remote_id, request = self.remote_id, self.request
+	def _process(self, msg):
+		self.logger.debug("worker %s recv %s", self.identity, msg)
+		remote_id, packed_request = msg
+		request = Request.unpack(packed_request)
 		err = None
 		r = None
 		try:
@@ -200,19 +197,64 @@ class ClassExposerWorker(threading.Thread):
 			err['error'] = str(ex)
 		response = Response(request.uid, r, err)
 		self.socket.send_multipart([remote_id, response.pack()])
+
+	def __repr__(self):
+		return "ClassExposerWorker(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
 		
-		self.socket.close()
-		if self._ctx_is_mine and not self.ctx.closed:
-			self.ctx.term()
-		
-		
-		
+
+class FdLoop:
+	def __init__(self, l_fd_n_cb):
+		self.poll = zmq.Poller()
+		self._e_stop = threading.Event()
+		self._e_start = threading.Event()
+		self.fd_n_cb = l_fd_n_cb
+		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
+		self._exit = False
+		t = threading.Thread(target=self.loop)
+		t.setDaemon(True)
+		t.start()
+
+	@property
+	def running(self):
+		return self._e_start.is_set()
+	
+	def start(self):
+		if not self.running:
+			self._e_start.set()
+			self._e_stop.clear()
+			for fd,_cb in self.fd_n_cb:
+				self.poll.register(fd, zmq.POLLIN)
+
+	def stop(self):
+		if self.running:
+			self._e_stop.set()
+			self._e_start.clear()
+			for fd,_cb in self.fd_n_cb:
+				self.poll.unregister(fd)
+
+	def exit(self):
+		self.stop()
+		self._exit = True
+	
+	def loop(self):
+		while not self._exit:
+			self._e_start.wait()
+			while not self._e_stop.is_set():
+				try:
+					sockets = dict(self.poll.poll(500))
+				except zmq.core.error.ZMQError as ex:
+					if not self._e_stop.is_set():
+						self.logger.error("Error on poll : %s", ex, exc_info=1)
+				else:
+					for fd,cb in self.fd_n_cb:
+						if fd in sockets:
+							cb(fd, sockets[fd])
 
 class ClassExposer:
 	"""
 	Permet d'exposer les méthodes d'une classe à distance.
 	"""
-	def __init__(self, identity, bind_addr, exposed_obj, ctx=None, io_loop=None):
+	def __init__(self, identity, bind_addr, exposed_obj, ctx=None, init_workers=5, max_workers=50, min_workers=None, dynamic_workers=True):
 		"""
 		@param {str} identity nom unique du client
 		@param {str} bind_addr l'adresse du backend du serveur
@@ -220,28 +262,52 @@ class ClassExposer:
 		@param {zmq.Context} zmq context
 		"""
 		self.identity = identity
-		self.ioloop = io_loop or ioloop.IOLoop.instance()
+		self.ioloop = ioloop.IOLoop()
 		self.ctx = ctx or zmq.Context()
 		self._ctx_is_mine = ctx is None
-		self.socket = self.ctx.socket(zmq.DEALER)
-		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
+		self.frontend = self.ctx.socket(zmq.DEALER)
+		self.frontend.setsockopt(zmq.IDENTITY, self.identity.encode())
 		self.bind_addr = bind_addr
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 		self.exposed_obj = exposed_obj
-		self.backend = self.ctx.socket(zmq.DEALER)
-		self.backend.bind("inproc://"+self.identity)
+		self.backend = self.ctx.socket(zmq.ROUTER)
+		self.backend_addr = "inproc://"+self.identity
+		self.backend.bind(self.backend_addr)
 		self._running = False
+		self.min_workers = min_workers or init_workers
+		self.max_workers = max_workers
+		self.dynamic_workers = dynamic_workers
+		self._workers = {}
+		self._free_workers = []
+		for _ in range(init_workers):
+			self.add_worker()
+		self._e_stop = threading.Event()
+		"""self.backend_loop = FdLoop([(self.backend, self.backend_handler)])
+		self.frontend_loop = FdLoop([(self.frontend, self.frontend_handler)])"""
+		self._unprocess_msg = []
+		self._timeout_can_reduce_workers = 0
 
+	def add_worker(self):
+		worker_id = "Worker-%s-%s" % (self.identity, uuid.uuid1())
+		worker = ClassExposerWorker(worker_id, self.backend_addr, self.exposed_obj, ctx=self.ctx)
+		worker.start()
+		self._free_workers.append(worker_id)
+		self._workers[worker_id] = worker
+		
+	
 	def running(self):
 		return self._running
 	
 	def start(self):
 		if not self.running():
 			self.logger.info('%s started', self.identity)
-			self.socket.connect(self.bind_addr)
-
-			self.ioloop.add_handler(self.socket, self.frontend_handler, ioloop.IOLoop.READ)
+			self.frontend.connect(self.bind_addr)
+			"""
+			self.backend_loop.start()
+			self.frontend_loop.start()
+			"""
 			self.ioloop.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
+			self.ioloop.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
 
 			if not self.ioloop.running():
 				t = threading.Thread(target=self.ioloop.start)
@@ -251,20 +317,75 @@ class ClassExposer:
 			self._running = True
 
 	def stop(self):
-		self.socket.close()
+		"""
+		self.backend_loop.stop()
+		self.frontend_loop.stop()
+		"""
+		self.ioloop.stop()
+		time.sleep(0.05)
+		
+		for worker in self._workers.values():
+			worker.stop()
+			
+		self.frontend.close()
 		self.backend.close()
 		
 		if self._ctx_is_mine and not self.ctx.closed:
 			self.ctx.term()
 		
-		self.ioloop.remove_handler(self.socket)
-		
 		self._running = False
 
 	def backend_handler(self, fd, _ev):
 		msg = fd.recv_multipart()
-		self.socket.send_multipart(msg)
+		self.logger.debug("backend recv %s", msg)
+		worker_id, msg = msg[0], msg[1:]
+		worker_id = worker_id.decode()
+		self._free_workers.append(worker_id)
+		self.consume_unprocess_msg()
+		self.logger.debug("send to frontend %s",msg)
+		self.frontend.send_multipart(msg)
 
+	def consume_unprocess_msg(self):
+		def worker_filter(worker_id):
+			if not self._unprocess_msg:
+				return True
+			self.send_to_worker(worker_id, self._unprocess_msg.pop())
+			return False
+
+		# ajouter des workers si on galère trop
+		if self.dynamic_workers:
+			n_workers = len(self._workers)
+			n_free_workers = len(self._free_workers)
+			if len(self._unprocess_msg) < n_free_workers//4 and time.time()>self._timeout_can_reduce_workers:
+				if n_workers>5:
+					max_to_remove = n_workers-5
+					for i in range(min(max_to_remove, n_free_workers//4)):
+						worker_id = self._free_workers.pop()
+						self._workers[worker_id].stop()
+						self._workers[worker_id] = None
+						del self._workers[worker_id]
+					self.logger.info("%s reduce to %s workers", self.identity, len(self._workers))
+					self._timeout_can_reduce_workers = time.time()+10
+
+		# envoyer le plus de messages possible aux workers
+		self._free_workers = list(filter(worker_filter, self._free_workers))
+
+		# retirer des workers si on en a trop
+		if self.dynamic_workers:
+			n_workers = len(self._workers)
+			if self._unprocess_msg:
+				if n_workers != self.max_workers:
+					for i in range(len(self._workers), min(self.max_workers,2*n_workers)):
+						self.add_worker()
+					self._timeout_can_reduce_workers = time.time()+10
+					self.logger.info("%s go to %s workers", self.identity, len(self._workers))
+			
+	
+	def send_to_worker(self, worker_id, msg):
+		new_msg = [worker_id.encode()]+msg
+		self.logger.debug("send to backend %s"% new_msg)
+		self.backend.send_multipart(new_msg)
+			
 	def frontend_handler(self, fd, _ev):
 		"""
 		Le message reçu est en 2 parties :
@@ -284,35 +405,10 @@ class ClassExposer:
 		"""
 		#print('ClassExposer %s received: %s' % (self.identity, msg))
 		msg = fd.recv_multipart()
-		remote_id = msg[0]
-		request = Request.unpack(msg[1])
-		worker = ClassExposerWorker(self.exposed_obj, 'inproc://'+self.identity, remote_id, request, ctx=self.ctx)
-		worker.start()
+		self.logger.debug("frontend recv %s", msg)
+		self._unprocess_msg.append(msg)
+		self.consume_unprocess_msg()
 		return
-		err = None
-		r = None
-		try:
-			if request.fct=='help':
-				f = self.help
-			elif request.fct=='stop':
-				f = self.stop
-			else:
-				f = getattr(self.exposed_obj, request.fct)
-				if request.fct.startswith('_'):
-					raise Exception("Method %s is protected" % request.fct)
-			args,kwargs = request.args, request.kwargs
-			if args and kwargs:
-				r = f(*args, **kwargs)
-			elif kwargs:
-				r = f(**kwargs)
-			else:
-				r = f(*args)
-		except Exception as ex:
-			err = {}
-			err['tb'] = traceback.format_exc()
-			err['error'] = str(ex)
-		response = Response(request.uid, r, err)
-		self.socket.send_multipart([remote_id, response.pack()])
 
 	def help(self, method=None):
 		"""
@@ -391,9 +487,9 @@ class RemoteClient(AsyncClient):
 
 
 class Server():
-	def __init__(self, ft_bind_addr="tcp://*:5000", bc_bind_addr="tcp://*:5001", pb_bind_addr="tcp://*:5002", ctx=None, io_loop=None):
+	def __init__(self, ft_bind_addr="tcp://*:5000", bc_bind_addr="tcp://*:5001", pb_bind_addr="tcp://*:5002", ctx=None):
 		self.ctx = ctx or zmq.Context()
-		self.ioloop = io_loop or ioloop.IOLoop.instance()
+		self.ioloop = ioloop.IOLoop()
 		self._ctx_is_mine = ctx is None
 		# création ds sockets
 		self.frontend = self.ctx.socket(zmq.ROUTER)
@@ -430,12 +526,14 @@ class Server():
 			self.frontend.bind(self._ft_addr)
 			self.backend.bind(self._bc_addr)
 			self.publisher.bind(self._pb_addr)
+			
+			time.sleep(0.2)
 
 			self.ioloop.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
 			self.ioloop.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
 
 			if not self.ioloop.running():
-				t = threading.Thread(target=self.ioloop.start)
+				t = threading.Thread(target=self.ioloop.start, name="IOLoop-%s"%self)
 				t.setDaemon(True)
 				t.start()
 			
@@ -450,25 +548,33 @@ class Server():
 		return self._running
 
 	def stop(self):
+		
+		self.ioloop.stop()
+		time.sleep(0.05)
+		
 		self.frontend.close()
 		self.backend.close()
 		self.publisher.close()
+		
 		if self._ctx_is_mine and not self.ctx.closed:
 			self.ctx.term()
-
-		self.ioloop.remove_handler(self.frontend)
-		self.ioloop.remove_handler(self.backend)
 
 		self._running = False
 		
 		self.logger.info("Server stopped.")
 
+	def __repr__(self):
+		return "Server(%s,%s,%s)"%(self._ft_addr, self._bc_addr, self._pb_addr)
 
 if __name__ == "__main__":
 
-	logging.basicConfig(level=-1000)
+	import sys
+
+	log_lvl = int(sys.argv[1]) if len(sys.argv) >= 2 else 20
+
+	logging.basicConfig(level=log_lvl)
 	
-	server = Server("tcp://*:8080","tcp://*:8081","tcp://*:8082",io_loop=ioloop.IOLoop())
+	server = Server("tcp://*:8080","tcp://*:8081","tcp://*:8082")
 	server.start()
 	time.sleep(1)
 	
@@ -485,7 +591,7 @@ if __name__ == "__main__":
 		def echo(self, m):
 			return m
 
-	cool = ClassExposer("cool", "tcp://localhost:8081", Cool(), io_loop=ioloop.IOLoop())
+	cool = ClassExposer("cool", "tcp://localhost:8081", Cool())
 	cool.start()
 	
 	remote_cool = RemoteClient("remote_cool", "tcp://localhost:8080", "cool")
@@ -493,9 +599,15 @@ if __name__ == "__main__":
 
 	time.sleep(0.5)
 
-	while 1:
-		print(remote_cool.ping(56,block=True))
-		time.sleep(1)
+	try:
+		while 1:
+			print(remote_cool.ping(56,block=True))
+			time.sleep(1)
+	except KeyboardInterrupt:
+		remote_cool.stop()
+		cool.stop()
+		server.stop()
+		time.sleep(0.2)
 	"""
 	print(remote_cool.ping(56,block=True))
 	print(remote_cool.ping(56,block=True))
