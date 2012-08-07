@@ -107,12 +107,32 @@ class ResponseEvent:
 	def is_set(self):
 		return self._ev.is_set()
 
-class Base(threading.Thread):
+class Base(ioloop.IOLoop):
 	def __init__(self, identity, ctx=None):
-		threading.Thread.__init__ (self)
+		ioloop.IOLoop.__init__(self)
 		self.identity = identity
 		self.ctx = ctx or zmq.Context()
 		self._ctx_is_mine = ctx is None
+		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
+
+	def start(self, block=True):
+		self.logger.info("%s started", self.identity)
+		if block:
+			super(Base,self).start()
+		else:
+			t = threading.Thread(target=super(Base,self).start, name=self.identity)
+			t.setDaemon(True)
+			t.start()
+
+	def stop(self):
+		self.logger.info("stop event received")
+		super(Base,self).stop()
+
+	def close(self, all_fds=False):
+		self.stop()
+		self.logger.info("close event received")
+		time.sleep(0.05)
+		super(Base,self).close(all_fds)
 
 class Client(Base):
 	def __init__(self, identity, conn_addr, ctx=None):
@@ -126,53 +146,23 @@ class Client(Base):
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
 		self.socket.connect(conn_addr)
-		self.poll = zmq.Poller()
-		self.poll.register(self.socket, zmq.POLLIN)
-		self.setDaemon(True)
-		self._e_stop = threading.Event()
-		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
+		self.add_handler(self.socket, self._process, ioloop.IOLoop.READ)
 
-	def run(self):
-		socket = self.socket
+	def close(self, all_fds=False):
+		super(Client, self).close(all_fds)
+		if not all_fds:
+			self.socket.close()
 
-		poll = self.poll
-		
-		self.logger.info('%s started', self.identity)
-		
-		while not self._e_stop.is_set():
-			try:
-				sockets = dict(poll.poll(500))
-			except zmq.core.error.ZMQError as ex:
-				if not self._e_stop.is_set():
-					self.logger.error("Client %s get an error on poll : %s", self.identity, ex, exc_info=1)
-			else:
-				if socket in sockets:
-					if sockets[socket] == zmq.POLLIN:
-						msg = socket.recv_multipart()
-						self._process(msg)
-						del msg
-
-		self.socket.close()
-		if self._ctx_is_mine and not self.ctx.closed:
-			self.ctx.term()
-
-		self.logger.info("Client %s stopped", self.identity)
-
-	def _process(self, msg):
-		"""
-		méthode appellée à chaque reception d'un message
-		"""
-		self.logger.warn("method Client._process must be override")
-		
-	def stop(self):
-		self._e_stop.set()
+	def _process(self, fd, ev):
+		self.logger.warn("Client._process must be override")
 
 class ClassExposer(Client):
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
 		Client.__init__(self, identity, conn_addr, ctx)
 		self.exposed_obj = exposed_obj
 
-	def _process(self, msg):
+	def _process(self, fd, _ev):
+		msg = fd.recv_multipart()
 		self.logger.debug("worker %s recv %s", self.identity, msg)
 		remote_id, packed_request = msg
 		request = Request.unpack(packed_request)
@@ -252,7 +242,7 @@ class FdLoop:
 					for fd in sockets:
 						self._fd_handlers[fd](fd, sockets[fd])
 
-class AsyncClassExposer:
+class AsyncClassExposer(Base):
 	"""
 	Permet d'exposer les méthodes d'une classe à distance.
 	"""
@@ -263,14 +253,11 @@ class AsyncClassExposer:
 		@param {Object} une instance de l'objet à exposer
 		@param {zmq.Context} zmq context
 		"""
-		self.identity = identity
-		self.ioloop = ioloop.IOLoop()
+		super(AsyncClassExposer,self).__init__(identity, ctx)
 		self.exposed_obj = exposed_obj
 		self.min_workers = min_workers or init_workers
 		self.max_workers = max_workers
 		self.dynamic_workers = dynamic_workers
-		self.ctx = ctx or zmq.Context()
-		self._ctx_is_mine = ctx is None
 		# socket recevant les requetes
 		self.frontend = self.ctx.socket(zmq.DEALER)
 		self.frontend.setsockopt(zmq.IDENTITY, self.identity.encode())
@@ -289,55 +276,17 @@ class AsyncClassExposer:
 		#self.loop = FdLoop({self.backend: self.backend_handler, self.frontend: self.frontend_handler})
 		# msg queue
 		self._unprocess_msg = queue.deque()
-		# logger
-		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
-		self._running = False
-		# bin fd handlers
-		self.ioloop.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
-		self.ioloop.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
+		# fd handlers
+		self.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
+		self.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
 
 	def add_worker(self):
 		worker_id = "Worker-%s-%s" % (self.identity, uuid.uuid1())
 		worker = ClassExposer(worker_id, self.backend_addr, self.exposed_obj, ctx=self.ctx)
-		worker.start()
+		# démarage en mode non bloquant pour qu'ils soient dans des threads
+		worker.start(False)
 		self._free_workers.append(worker_id)
 		self._workers[worker_id] = worker
-	
-	def running(self):
-		return self._running
-	
-	def start(self):
-		if not self.running():
-			self.logger.info('%s started', self.identity)
-			"""
-			self.backend_loop.start()
-			self.frontend_loop.start()
-			"""
-
-			if not self.ioloop.running():
-				t = threading.Thread(target=self.ioloop.start, name="IOLoop-%s"%self)
-				#t = threading.Thread(target=self.loop.start, name="FdLoop-%s"%self)
-				t.setDaemon(True)
-				t.start()
-			
-			self._running = True
-
-	def stop(self):
-		self.ioloop.stop()
-		#self.loop.stop()
-		time.sleep(0.05)
-		
-		for worker in self._workers.values():
-			worker.stop()
-			
-		
-		self.frontend.close()
-		self.backend.close()
-		self.ioloop.close()
-		if self._ctx_is_mine and not self.ctx.closed:
-			self.ctx.term()
-		
-		self._running = False
 
 	def backend_handler(self, fd, _ev):
 		msg = fd.recv_multipart()
@@ -429,14 +378,14 @@ class RemoteClient(Client):
 	"""
 	Permet de faire des appels à une classe distante
 	"""
-	def __init__(self, identity, bind_addr, remote_id, ctx=None):
+	def __init__(self, identity, conn_addr, remote_id, ctx=None):
 		"""
 		@param {str} identity
 		@param {str} bind_addr adresse du frontend du serveur
 		@param {str} remote_id identity du client distant
 		@param {zmq.Context} zmq ctx
 		"""
-		super(RemoteClient, self).__init__(identity, bind_addr, ctx)
+		super(RemoteClient, self).__init__(identity, conn_addr, ctx)
 		self.remote_id = remote_id
 		self._resp_events = {}
 
@@ -444,7 +393,8 @@ class RemoteClient(Client):
 		i = uuid.uuid1()
 		return str(i)
 
-	def _process(self, msg):
+	def _process(self, fd, _ev):
+		msg = fd.recv_multipart()
 		#print('RemoteClient %s received: %s' % (self.identity, msg))
 		response = Response.unpack(msg[1])
 		self._process_response(response)
@@ -489,11 +439,9 @@ class RemoteClient(Client):
 		return auto_generated_remote_call
 
 
-class Server():
-	def __init__(self, ft_bind_addr="tcp://*:5000", bc_bind_addr="tcp://*:5001", pb_bind_addr="tcp://*:5002", ctx=None):
-		self.ctx = ctx or zmq.Context()
-		self.ioloop = ioloop.IOLoop()
-		self._ctx_is_mine = ctx is None
+class Server(Base):
+	def __init__(self, ft_bind_addr="tcp://*:5000", bc_bind_addr="tcp://*:5001", pb_bind_addr="tcp://*:5002", ctx=None, identity="Server"):
+		super(Server, self).__init__(identity, ctx)
 		# création ds sockets
 		self.frontend = self.ctx.socket(zmq.ROUTER)
 		self.backend = self.ctx.socket(zmq.ROUTER)
@@ -502,10 +450,20 @@ class Server():
 		self._ft_addr = ft_bind_addr
 		self._bc_addr = bc_bind_addr
 		self._pb_addr = pb_bind_addr
-		# logger
-		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
-		# variables d'état
-		self._running = False
+		# binds
+		self.frontend.bind(self._ft_addr)
+		self.backend.bind(self._bc_addr)
+		self.publisher.bind(self._pb_addr)
+		# handlers
+		self.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
+		self.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
+
+	def start(self, block=False):		
+		self.logger.info("Server will start soon,")
+		self.logger.info("Listening\t%s", self._ft_addr)
+		self.logger.info("Backend\t%s", self._bc_addr)
+		self.logger.info("Publishing\t%s", self._pb_addr)
+		super(Server,self).start(block)
 	
 	def frontend_handler(self, _fd, _ev):
 		#print("frontend")
@@ -523,49 +481,12 @@ class Server():
 		self.frontend.send_multipart([id_to,id_from,msg])
 		self.publisher.send_multipart([id_from,id_to,msg])
 	
-	def start(self):
-
-		if not self.running():
-			self.frontend.bind(self._ft_addr)
-			self.backend.bind(self._bc_addr)
-			self.publisher.bind(self._pb_addr)
-			
-			time.sleep(0.2)
-
-			self.ioloop.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
-			self.ioloop.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
-
-			if not self.ioloop.running():
-				t = threading.Thread(target=self.ioloop.start, name="IOLoop-%s"%self)
-				t.setDaemon(True)
-				t.start()
-			
-			self.logger.info("Server ready")
-			self.logger.info("Listening\t%s", self._ft_addr)
-			self.logger.info("Backend\t%s", self._bc_addr)
-			self.logger.info("Publishing\t%s", self._pb_addr)
-		
-			self._running = True
-
-	def running(self):
-		return self._running
-
-	def stop(self):
-		
-		self.ioloop.stop()
-		time.sleep(0.05)
-		
-		self.frontend.close()
-		self.backend.close()
+	def close(self, all_fds=False):
+		super(Server, self).close(all_fds)
+		if not all_fds:
+			self.frontend.close()
+			self.backend.close()
 		self.publisher.close()
-		self.ioloop.close()
-		
-		if self._ctx_is_mine and not self.ctx.closed:
-			self.ctx.term()
-
-		self._running = False
-		
-		self.logger.info("Server stopped.")
 
 	def __repr__(self):
 		return "Server(%s,%s,%s)"%(self._ft_addr, self._bc_addr, self._pb_addr)
@@ -579,7 +500,7 @@ if __name__ == "__main__":
 	logging.basicConfig(level=log_lvl)
 	
 	server = Server("tcp://*:8080","tcp://*:8081","tcp://*:8082")
-	server.start()
+	server.start(False)
 	time.sleep(1)
 	
 	class Cool:
@@ -595,11 +516,11 @@ if __name__ == "__main__":
 		def echo(self, m):
 			return m
 
-	cool = ClassExposer("cool", "tcp://localhost:8081", Cool())
-	cool.start()
+	cool = AsyncClassExposer("cool", "tcp://localhost:8081", Cool())
+	cool.start(False)
 	
 	remote_cool = RemoteClient("remote_cool", "tcp://localhost:8080", "cool")
-	remote_cool.start()
+	remote_cool.start(False)
 
 	time.sleep(0.5)
 

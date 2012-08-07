@@ -7,12 +7,15 @@ import sys
 import threading
 import time
 import logging
-log_lvl = int(sys.argv[1]) if len(sys.argv) >= 2 else 20
+n_clients = int(sys.argv[1])
+n_reqs = int(sys.argv[2])
+block = sys.argv[3] == "block"
+log_lvl = int(sys.argv[4]) if len(sys.argv) > 4 else 20
 logging.basicConfig(level=log_lvl)
 	
 server = zerobot.Server("tcp://*:8000","tcp://*:8001","tcp://*:8002")
-server.start()
-time.sleep(1)
+server.start(False)
+time.sleep(0.1)
 
 class Cool:
 	def ping(self, num):
@@ -31,9 +34,10 @@ class Cool:
 		time.sleep(1)
 		return "ok"
 
-#cool = zerobot.AsyncClassExposer("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=False)
-cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool())
-cool.start()
+cool = zerobot.AsyncClassExposer("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=False)
+cool.start(False)
+#cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool())
+#cool.start(False)
 
 class ClientBenchmark(threading.Thread):
 	def __init__(self, identity, n_reqs, block):
@@ -44,7 +48,7 @@ class ClientBenchmark(threading.Thread):
 		self.n = 0
 		self.event = threading.Event()
 		self.setDaemon(True)
-		self.client.start()
+		self.client.start(False)
 	
 	def run(self):
 
@@ -63,8 +67,8 @@ class ClientBenchmark(threading.Thread):
 			while not self.event.is_set():
 				self.event.wait(1)
 
-	def stop(self):
-		self.client.stop()
+	def close(self):
+		self.client.close()
 		self.event.set()
 
 	def cb(self, response):
@@ -72,7 +76,6 @@ class ClientBenchmark(threading.Thread):
 		if self.n == self.n_reqs: self.event.set()
 
 def benchmark(nb_clients, nb_reqs, msg, block):
-
 
 	clients = []
 	for i in range(nb_clients):
@@ -93,34 +96,6 @@ def benchmark(nb_clients, nb_reqs, msg, block):
 		% (nb_clients, nb_reqs, 'block' if block else 'async', tot_reqs, ellapsed, average*1000))
 
 	for i in range(nb_clients):
-		clients[i].stop()
+		clients[i].close()
 
-time.sleep(1)
-benchmark(10, 10, 'coucou', True)
-time.sleep(1)
-benchmark(10, 500, 'coucou', True)
-time.sleep(1)
-benchmark(10, 1000, 'coucou', True)
-time.sleep(1)
-benchmark(10, 2000, 'coucou', True)
-time.sleep(1)
-benchmark(50, 10, 'coucou', True)
-time.sleep(1)
-benchmark(50, 500, 'coucou', True)
-time.sleep(1)
-benchmark(50, 1000, 'coucou', True)
-time.sleep(1)
-benchmark(50, 2000, 'coucou', True)
-
-time.sleep(1)
-benchmark(10, 10, 'coucou', False)
-time.sleep(1)
-benchmark(10, 500, 'coucou', False)
-time.sleep(1)
-benchmark(10, 1000, 'coucou', False)
-time.sleep(1)
-benchmark(50, 10, 'coucou', False)
-time.sleep(1)
-benchmark(50, 500, 'coucou', False)
-time.sleep(1)
-benchmark(50, 1000, 'coucou', False)
+benchmark(n_clients, n_reqs, "coucou", block)

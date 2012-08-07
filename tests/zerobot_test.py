@@ -58,22 +58,22 @@ class RemoteTestCase(unittest.TestCase):
 
 		def sleep(self, n):
 			time.sleep(n)
-	FRONTEND_PORT	= 5010
-	BACKEND_PORT	= 5011
-	LOG_PORT		= 5012
+	FRONTEND_PORT	= 5050
+	BACKEND_PORT	= 5051
+	LOG_PORT		= 5052
 	
 	def setUp(self):
 		#print("setup")
 		try:
 			self.server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,"tcp://*:%s"%self.LOG_PORT)
-			self.server.start()
+			self.server.start(False)
 
-			self.abc = ClassExposer("abc", "tcp://localhost:%s"%self.BACKEND_PORT, self.Abc(), ctx=zmq.Context(11))
+			self.abc = AsyncClassExposer("abc", "tcp://localhost:%s"%self.BACKEND_PORT, self.Abc(), ctx=zmq.Context(11))
 			self.abc.start()
 			time.sleep(0.2)
 			
 			self.client = RemoteClient("client", "tcp://localhost:%s"%self.FRONTEND_PORT, "abc")
-			self.client.start()
+			self.client.start(False)
 			time.sleep(0.2)
 		except Exception as ex:
 			print("Error on setup")
@@ -113,9 +113,9 @@ class RemoteTestCase(unittest.TestCase):
 	
 	def tearDown(self):
 		#print("tearDown")
-		self.server.stop()
+		self.server.close()
 		self.abc.stop()
-		self.client.stop()
+		self.client.close()
 		time.sleep(0.1)
 		#print("end tearDown")
 		
