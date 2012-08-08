@@ -9,7 +9,7 @@ from zmq.eventloop import ioloop
 
 class Server(Base):
 	def __init__(self, ft_bind_addr="tcp://*:5000", bc_bind_addr="tcp://*:5001", pb_bind_addr="tcp://*:5002", ctx=None, identity="Server"):
-		super(Server, self).__init__(identity, ctx)
+		super(Server, self).__init__(ctx)
 		# création ds sockets
 		self.frontend = self.ctx.socket(zmq.ROUTER)
 		self.backend = self.ctx.socket(zmq.ROUTER)

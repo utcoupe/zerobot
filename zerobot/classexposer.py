@@ -83,7 +83,8 @@ class AsyncClassExposer(Base):
 		@param {int} min_workers si non précisé est égale à init_workers
 		@param {bool|False} dynamic_workers autorisé l'ajout/suppression de workers automatiquement
 		"""
-		super(AsyncClassExposer,self).__init__(identity, ctx)
+		super(AsyncClassExposer,self).__init__(ctx)
+		self.identity = identity
 		self.exposed_obj = exposed_obj
 		self.min_workers = min_workers or init_workers
 		self.max_workers = max_workers
@@ -186,4 +187,4 @@ class AsyncClassExposer(Base):
 		return r
 
 	def __repr__(self):
-		return "ClassExposer(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
+		return "AsyncClassExposer(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)

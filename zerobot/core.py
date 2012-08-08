@@ -102,19 +102,18 @@ class ResponseEvent:
 
 
 class Base(ioloop.IOLoop):
-	def __init__(self, identity, ctx=None):
+	def __init__(self, ctx=None):
 		ioloop.IOLoop.__init__(self)
-		self.identity = identity
 		self.ctx = ctx or zmq.Context()
 		self._ctx_is_mine = ctx is None
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 
 	def start(self, block=True):
-		self.logger.info("%s started", self.identity)
+		self.logger.info("%s started", self)
 		if block:
 			super(Base,self).start()
 		else:
-			t = threading.Thread(target=super(Base,self).start, name=self.identity)
+			t = threading.Thread(target=super(Base,self).start, name="Thread-%s"%self)
 			t.setDaemon(True)
 			t.start()
 
@@ -135,7 +134,8 @@ class Client(Base):
 		@param {str} conn_addr adresse sur laquelle se connecter
 		@param {zmq.Context} zmq context
 		"""
-		super(Client, self).__init__(identity, ctx)
+		super(Client, self).__init__(ctx)
+		self.identity = identity
 		self.conn_addr = conn_addr
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
