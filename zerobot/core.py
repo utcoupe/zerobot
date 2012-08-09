@@ -42,7 +42,7 @@ class Request:
 		return self.uid == o.uid and self.fct == o.fct and self.args == o.args and self.kwargs == o.kwargs
 
 	def __repr__(self):
-		return "Request(%s,%s,%s,%s)" % (self.uid, self.fct, self.args, self.kwargs)
+		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.uid, self.fct, self.args, self.kwargs)
 
 class Response:
 	def __init__(self, uid, data, error=None):
@@ -72,7 +72,7 @@ class Response:
 		return self.uid == o.uid and self.data == self.data and self.error == self.error
 
 	def __repr__(self):
-		return "Response(%s,%s,%s)" % (self.uid, self.data, self.error)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.uid, self.data, self.error)
 
 class ResponseEvent:
 	def __init__(self, cb_fct=None):
@@ -127,6 +127,9 @@ class Base(ioloop.IOLoop):
 		time.sleep(0.05)
 		super(Base,self).close(all_fds)
 
+	def __repr__(self):
+		return "%s(..)" % (self.__class__.__name__, )
+
 class Client(Base):
 	def __init__(self, identity, conn_addr, ctx=None):
 		"""
@@ -148,11 +151,16 @@ class Client(Base):
 			self.socket.close()
 
 	def _process(self, fd, ev):
-		self.logger.warn("Client._process must be override")
+		raise Exception("Client._process must be override")
 
 	def send_multipart(self, msg):
 		self.socket.send_multipart(msg)
 
+	def send(self, msg):
+		self.socket.send(msg)
+
+	def __repr__(self):
+		return "%s(%s,%s,..)" % (self.__class__.__name__, self.identity, self.conn_addr)
 
 
 class FdLoop:
