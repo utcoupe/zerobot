@@ -29,7 +29,7 @@ class _ProxyTest:
 		self.server.setsockopt(zmq.IDENTITY, b"server")
 		self.server.bind("inproc://server")
 		# proxy
-		self.proxy = self.KLASS("proxy", "inproc://server", "inproc://proxy", ctx=self.ctx)
+		self.proxy = self.KLASS("proxy", ft_conn_addr="inproc://server", bc_bind_addr="inproc://proxy", ctx=self.ctx)
 		self.proxy.start(False)
 		# client
 		self.client = self.ctx.socket(zmq.DEALER)
