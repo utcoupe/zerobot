@@ -1,6 +1,6 @@
 
-
 from .core import *
+from .proxy import Proxy
 
 import queue
 import traceback
@@ -66,7 +66,7 @@ class ClassExposer(Client):
 		return "ClassExposerWorker(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
 		
 
-class AsyncClassExposer(Base):
+class AsyncClassExposer(Proxy):
 	"""
 	Permet d'exposer les méthodes d'une classe à distance. Permet en plus
 	de lancer plusieurs méthodes bloquantes de la classe simultanément.
@@ -83,21 +83,13 @@ class AsyncClassExposer(Base):
 		@param {int} min_workers si non précisé est égale à init_workers
 		@param {bool|False} dynamic_workers autorisé l'ajout/suppression de workers automatiquement
 		"""
-		super(AsyncClassExposer,self).__init__(ctx)
-		self.identity = identity
+		super(AsyncClassExposer,self).__init__(identity, ctx=ctx,
+			ft_conn_addr=conn_addr, ft_type=zmq.DEALER,
+			bc_bind_addr="inproc://"+identity, bc_type=zmq.ROUTER)
 		self.exposed_obj = exposed_obj
 		self.min_workers = min_workers or init_workers
 		self.max_workers = max_workers
 		self.dynamic_workers = dynamic_workers
-		# socket recevant les requetes
-		self.frontend = self.ctx.socket(zmq.DEALER)
-		self.frontend.setsockopt(zmq.IDENTITY, self.identity.encode())
-		self.conn_addr = conn_addr
-		self.frontend.connect(self.conn_addr)
-		# socket pour les workers
-		self.backend = self.ctx.socket(zmq.ROUTER)
-		self.backend_addr = "inproc://"+self.identity
-		self.backend.bind(self.backend_addr)
 		# workers
 		self._workers = {}
 		self._free_workers = []
@@ -107,13 +99,10 @@ class AsyncClassExposer(Base):
 		#self.loop = FdLoop({self.backend: self.backend_handler, self.frontend: self.frontend_handler})
 		# msg queue
 		self._unprocess_msg = queue.deque()
-		# fd handlers
-		self.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
-		self.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
 
 	def add_worker(self):
 		worker_id = "Worker-%s-%s" % (self.identity, uuid.uuid1())
-		worker = ClassExposer(worker_id, self.backend_addr, self.exposed_obj, ctx=self.ctx)
+		worker = ClassExposer(worker_id, self._bc_addr, self.exposed_obj, ctx=self.ctx)
 		# démarage en mode non bloquant pour qu'ils soient dans des threads
 		worker.start(False)
 		self._free_workers.append(worker_id)
@@ -187,4 +176,4 @@ class AsyncClassExposer(Base):
 		return r
 
 	def __repr__(self):
-		return "AsyncClassExposer(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
+		return "AsyncClassExposer(%s,%s,%s,..)" % (self.identity, self._ft_addr, self.exposed_obj)
