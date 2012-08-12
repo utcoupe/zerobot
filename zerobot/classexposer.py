@@ -130,7 +130,7 @@ class AsyncClassExposer(Proxy):
 						self._workers[worker_id].stop()
 						self._workers[worker_id] = None
 						del self._workers[worker_id]
-					self.logger.info("%s reduce to %s workers", self.identity, len(self._workers))
+					self.logger.info("%s down to %s workers", self.identity, len(self._workers))
 					self._timeout_can_reduce_workers = time.time()+10
 
 		# envoyer le plus de messages possible aux workers
@@ -147,7 +147,7 @@ class AsyncClassExposer(Proxy):
 					for i in range(len(self._workers), min(self.max_workers,2*n_workers)):
 						self.add_worker()
 					self._timeout_can_reduce_workers = time.time()+10
-					self.logger.info("%s go to %s workers", self.identity, len(self._workers))
+					self.logger.info("%s grows to %s workers", self.identity, len(self._workers))
 	
 	def send_to_worker(self, worker_id, msg):
 		new_msg = [worker_id.encode()]+msg
