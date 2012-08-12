@@ -35,7 +35,6 @@ class Cool:
 		return "ok"
 
 #cool = zerobot.AsyncClassExposer("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=False)
-#cool.start(False)
 cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool())
 cool.start(False)
 

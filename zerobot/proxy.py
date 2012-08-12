@@ -36,14 +36,16 @@ class Proxy(Base):
 	def frontend_handler(self, fd, _ev):
 		msg = fd.recv_multipart()
 		new_msg = self.frontend_process_msg(msg)
-		#print("ft send", msg)
-		self.backend.send_multipart(msg)
+		if new_msg:
+			#print("ft send", new_msg)
+			self.backend.send_multipart(new_msg)
 
 	def backend_handler(self, fd, _ev):
 		msg = fd.recv_multipart()
 		new_msg = self.backend_process_msg(msg)
-		#print("bc send", msg)
-		self.frontend.send_multipart(msg)
+		if new_msg:
+			#print("bc send", new_msg)
+			self.frontend.send_multipart(new_msg)
 
 	def backend_process_msg(self, msg):
 		return msg

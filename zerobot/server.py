@@ -24,21 +24,19 @@ class Server(Proxy):
 		self.logger.info("Publishing\t%s", self._pb_addr)
 		super(Server,self).start(block)
 	
-	def frontend_handler(self, _fd, _ev):
+	def frontend_process_msg(self, msg):
 		#print("frontend")
-		#id_from, id_to, msg = zhelpers.dump(frontend)
-		id_from, id_to, msg = self.frontend.recv_multipart()
+		id_from, id_to, msg = msg
 		#print('Frontend received %s' % ((id_from, id_to, msg),))
-		self.backend.send_multipart([id_to,id_from,msg])
 		self.publisher.send_multipart([id_from,id_to,msg])
+		return [id_to,id_from,msg]
 
-	def backend_handler(self, _fd, _ev):
+	def backend_process_msg(self, msg):
 		#print("backend")
-		#id_from, id_to, msg = zhelpers.dump(backend)
-		id_from, id_to, msg = self.backend.recv_multipart()
+		id_from, id_to, msg = msg
 		#print('Backend received %s' % ((id_from, id_to, msg),))
-		self.frontend.send_multipart([id_to,id_from,msg])
 		self.publisher.send_multipart([id_from,id_to,msg])
+		return [id_to,id_from,msg]
 	
 	def close(self, all_fds=False):
 		super(Server, self).close(all_fds)

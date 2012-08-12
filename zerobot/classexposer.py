@@ -108,15 +108,14 @@ class AsyncClassExposer(Proxy):
 		self._free_workers.append(worker_id)
 		self._workers[worker_id] = worker
 
-	def backend_handler(self, fd, _ev):
-		msg = fd.recv_multipart()
+	def backend_process_msg(self, msg):
 		self.logger.debug("backend recv %s", msg)
 		worker_id, msg = msg[0], msg[1:]
 		worker_id = worker_id.decode()
 		self._free_workers.append(worker_id)
 		self.consume_unprocess_msg()
 		self.logger.debug("send to frontend %s",msg)
-		self.frontend.send_multipart(msg)
+		return msg
 
 	def consume_unprocess_msg(self):
 		# ajouter des workers si on galère trop
@@ -155,13 +154,12 @@ class AsyncClassExposer(Proxy):
 		self.logger.debug("send to backend %s"% new_msg)
 		self.backend.send_multipart(new_msg)
 			
-	def frontend_handler(self, fd, _ev):
+	def frontend_process_msg(self, msg):
 		#print('ClassExposer %s received: %s' % (self.identity, msg))
-		msg = fd.recv_multipart()
 		self.logger.debug("frontend recv %s", msg)
 		self._unprocess_msg.append(msg)
 		self.consume_unprocess_msg()
-		return
+		return None
 
 	def help(self, method=None):
 		"""
