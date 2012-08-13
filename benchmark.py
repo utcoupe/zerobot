@@ -61,6 +61,7 @@ class ClientBenchmark(threading.Thread):
 				self.client.sleep(1, block=self.block, cb_fct=cb)
 			"""
 			self.client.test(block=self.block, cb_fct=cb, **kwargs)
+			#self.client.ping(42, block=self.block, cb_fct=cb)
 
 		if not self.block:
 			while not self.event.is_set():
@@ -91,8 +92,9 @@ def benchmark(nb_clients, nb_reqs, msg, block):
 	
 	tot_reqs = nb_clients*nb_reqs
 	average = ellapsed/tot_reqs
-	print('%s clients, %s reqs %s (tot:%sreqs) : %0.2fs, average : %0.2fms'
-		% (nb_clients, nb_reqs, 'block' if block else 'async', tot_reqs, ellapsed, average*1000))
+	reqs_sec = round(tot_reqs/ellapsed)
+	print('%s clients, %s reqs %s (tot:%sreqs) : %0.2fs, average : %0.2fms, reqs/s : %s'
+		% (nb_clients, nb_reqs, 'block' if block else 'async', tot_reqs, ellapsed, average*1000, reqs_sec))
 
 	for i in range(nb_clients):
 		clients[i].close()
