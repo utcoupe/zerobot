@@ -111,9 +111,7 @@ class AsyncClassExposer(Base):
 		self.dynamic_workers = dynamic_workers
 		# workers
 		self._workers = {}
-		self._n_workers = 0
 		self._free_workers = []
-		self._n_free_workers = 0
 		for _ in range(init_workers):
 			self.add_worker()
 		self._timeout_can_reduce_workers = 0
@@ -122,39 +120,6 @@ class AsyncClassExposer(Base):
 		self._e_stop = threading.Event()
 		# logger
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
-	"""
-	def consume_unprocess_msg(self):
-		# ajouter des workers si on galère trop
-		if self.dynamic_workers:
-			n_workers = len(self._workers)
-			n_free_workers = len(self._free_workers)
-			if len(self._unprocess_msg) < n_free_workers//4 and time.time()>self._timeout_can_reduce_workers:
-				if n_workers>5:
-					max_to_remove = n_workers-5
-					for i in range(min(max_to_remove, n_free_workers//4)):
-						worker_id = self._free_workers.pop()
-						self._workers[worker_id].stop()
-						self._workers[worker_id] = None
-						del self._workers[worker_id]
-					self.logger.info("%s down to %s workers", self.identity, len(self._workers))
-					self._timeout_can_reduce_workers = time.time()+10
-
-		# envoyer le plus de messages possible aux workers
-		while self._unprocess_msg and self._free_workers:
-			msg = self._unprocess_msg.popleft()
-			worker_id = self._free_workers.pop()
-			self.send_to_worker(worker_id, msg)
-
-		# retirer des workers si on en a trop
-		if self.dynamic_workers:
-			n_workers = len(self._workers)
-			if self._unprocess_msg:
-				if n_workers != self.max_workers:
-					for i in range(len(self._workers), min(self.max_workers,2*n_workers)):
-						self.add_worker()
-					self._timeout_can_reduce_workers = time.time()+10
-					self.logger.info("%s grows to %s workers", self.identity, len(self._workers))
-	"""
 	
 	def _loop(self):
 		while not self._e_stop.is_set():
@@ -189,22 +154,25 @@ class AsyncClassExposer(Base):
 			
 	def grow(self):
 		# ajouter des workers si on galère trop
-		if self._n_workers != self.max_workers:
-			for i in range(self._n_workers, min(self.max_workers,2*self._n_workers)):
+		n_workers = len(self._workers)
+		if n_workers != self.max_workers:
+			for i in range(n_workers, min(self.max_workers,2*n_workers)):
 				self.add_worker()
 			self._timeout_can_reduce_workers = time.time()+10
-			self.logger.info("%s grows to %s workers", self.identity, self._n_workers)
+			self.logger.info("%s grows to %s workers", self.identity, len(self._workers))
 
 	def ungrow(self):
 		# retirer des workers si on en a trop
-		if self._n_workers > self.min_workers and self._n_free_workers > self._n_workers//2 and time.time()>self._timeout_can_reduce_workers:
-			max_to_remove = self._n_workers-self.min_workers
-			for i in range(min(max_to_remove, self._n_free_workers//2)):
+		n_free_workers = len(self._free_workers)
+		n_workers = len(self._workers)
+		if n_workers > self.min_workers and n_free_workers > n_workers//2 and time.time()>self._timeout_can_reduce_workers:
+			max_to_remove = n_workers-self.min_workers
+			for i in range(min(max_to_remove, n_free_workers//2)):
 				worker_id = self._free_workers.pop()
 				self._workers[worker_id].stop()
 				self._workers[worker_id] = None
 				del self._workers[worker_id]
-			self.logger.info("%s ungrows %s workers", self.identity,self._n_workers)
+			self.logger.info("%s ungrows %s workers", self.identity,len(self._workers))
 			self._timeout_can_reduce_workers = time.time()+10
 	
 	def start(self, block=True):
@@ -238,22 +206,18 @@ class AsyncClassExposer(Base):
 		worker.start(False)
 		self._free_workers.append(worker_id)
 		self._workers[worker_id] = worker
-		self._n_workers += 1
-		self._n_free_workers += 1
 
 	def backend_process_msg(self, msg):
 		self.logger.debug("backend recv %s", msg)
 		worker_id, msg = msg[0], msg[1:]
 		worker_id = worker_id.decode()
 		self._free_workers.append(worker_id)
-		self._n_free_workers += 1
 		return msg
 			
 	def frontend_process_msg(self, msg):
 		#print('ClassExposer %s received: %s' % (self.identity, msg))
 		self.logger.debug("frontend recv %s", msg)
 		worker_id = self._free_workers.pop()
-		self._n_free_workers -= 1
 		return [worker_id.encode()]+msg
 
 	def __repr__(self):
