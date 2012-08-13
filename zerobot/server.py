@@ -16,6 +16,7 @@ class Server(Proxy):
 		self._pb_addr = pb_bind_addr
 		# binds
 		self.publisher.bind(self._pb_addr)
+		self._to_close.append(self.publisher)
 
 	def start(self, block=False):
 		self.logger.info("Server start")
@@ -37,10 +38,6 @@ class Server(Proxy):
 		#print('Backend received %s' % ((id_from, id_to, msg),))
 		self.publisher.send_multipart([id_from,id_to,msg])
 		return [id_to,id_from,msg]
-	
-	def close(self, all_fds=False):
-		super(Server, self).close(all_fds)
-		self.publisher.close()
 
 	def __repr__(self):
 		return "Server(%s,%s,%s)"%(self._ft_addr, self._bc_addr, self._pb_addr)

@@ -107,6 +107,7 @@ class Base(ioloop.IOLoop):
 		self.ctx = ctx or zmq.Context()
 		self._ctx_is_mine = ctx is None
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
+		self._to_close = []
 
 	def start(self, block=True):
 		self.logger.info("%s started", self)
@@ -126,6 +127,13 @@ class Base(ioloop.IOLoop):
 		self.logger.info("close event received")
 		time.sleep(0.05)
 		super(Base,self).close(all_fds)
+		time.sleep(0.05)
+		if not all_fds:
+			for sock in self._to_close:
+				sock.close()
+		if self._ctx_is_mine:
+			self.ctx.term()
+		self.logger.info("closed")
 
 	def __repr__(self):
 		return "%s(..)" % (self.__class__.__name__, )
@@ -144,11 +152,7 @@ class Client(Base):
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
 		self.socket.connect(conn_addr)
 		self.add_handler(self.socket, self._process, ioloop.IOLoop.READ)
-
-	def close(self, all_fds=False):
-		super(Client, self).close(all_fds)
-		if not all_fds:
-			self.socket.close()
+		self._to_close.append(self.socket)
 
 	def _process(self, fd, ev):
 		raise Exception("Client._process must be override")
