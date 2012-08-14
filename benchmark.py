@@ -34,20 +34,45 @@ class Cool:
 		time.sleep(1)
 		return "ok"
 
-cool = zerobot.AsyncClassExposer("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=True)
-#cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool())
+#cool = zerobot.AsyncClassExposer("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=True)
+cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool())
 cool.start(False)
+"""
+ctx = zmq.Context()
+cool = ctx.socket(zmq.DEALER)
+cool.identity = b"cool"
+cool.connect("tcp://localhost:8001")
+import re
+r = re.compile(".*?\"uid\": \"(.*?)\".*?")
+def loop():
+	while True:
+		msg = cool.recv_multipart()
+		t = r.match(msg[1].decode())
+		uid = t.group(1)
+		cool.send_multipart([msg[0], ('{"data":96, "error":null, "uid":"%s"}'%uid).encode()])
+	cool.close()
+t = threading.Thread(target=loop)
+t.setDaemon(True)
+t.start()
+"""
 
 class ClientBenchmark(threading.Thread):
 	def __init__(self, identity, n_reqs, block):
 		threading.Thread.__init__(self)
 		self.client = zerobot.RemoteClient(identity, "tcp://localhost:8000", "cool")
+		self.client.start(False)
+		"""
+		ctx = zmq.Context()
+		self.client = ctx.socket(zmq.DEALER)
+		self.client.identity = identity.encode()
+		self.client.connect("tcp://localhost:8000")
+		self.msg = '{"uid": "%s", "fct": "ping", "args":[42], "kwargs":{}}'
+		"""
 		self.n_reqs = n_reqs
 		self.block = block
 		self.n = 0
 		self.event = threading.Event()
 		self.setDaemon(True)
-		self.client.start(False)
 	
 	def run(self):
 
@@ -60,12 +85,17 @@ class ClientBenchmark(threading.Thread):
 			else:
 				self.client.sleep(1, block=self.block, cb_fct=cb)
 			"""
-			self.client.test(block=self.block, cb_fct=cb, **kwargs)
-			#self.client.ping(42, block=self.block, cb_fct=cb)
+			"""
+			self.client.send_multipart([b"cool", (self.msg % i).encode()])
+			if self.block:
+				self.client.recv_multipart()
+			"""
+			#self.client.test(block=self.block, cb_fct=cb, **kwargs)
+			self.client.ping(42, block=self.block, cb_fct=cb)
 
 		if not self.block:
-			while not self.event.is_set():
-				self.event.wait(1)
+			#for i in range(self.n_reqs): self.client.recv_multipart()
+			while not self.event.is_set(): self.event.wait(1)
 
 	def close(self):
 		self.client.close()

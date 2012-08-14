@@ -27,16 +27,16 @@ class Server(Proxy):
 	
 	def frontend_process_msg(self, msg):
 		#print("frontend")
+		self.publisher.send_multipart(msg)
 		id_from, id_to, msg = msg
 		#print('Frontend received %s' % ((id_from, id_to, msg),))
-		self.publisher.send_multipart([id_from,id_to,msg])
 		return [id_to,id_from,msg]
 
 	def backend_process_msg(self, msg):
 		#print("backend")
+		self.publisher.send_multipart(msg)
 		id_from, id_to, msg = msg
 		#print('Backend received %s' % ((id_from, id_to, msg),))
-		self.publisher.send_multipart([id_from,id_to,msg])
 		return [id_to,id_from,msg]
 
 	def __repr__(self):
