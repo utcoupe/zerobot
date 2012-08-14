@@ -1,7 +1,7 @@
 
 from .core import *
 
-
+'''
 class Proxy(Base):
 	def __init__(self, identity, ctx=None, *, ft_conn_addr=None, ft_bind_addr=None, ft_type=zmq.DEALER, bc_bind_addr=None, bc_conn_addr=None, bc_type=zmq.DEALER):
 		"""
@@ -93,7 +93,7 @@ class Proxy(Base):
 
 
 '''
-class Proxy:
+class Proxy(Base):
 	def __init__(self, identity, ctx=None, *, ft_conn_addr=None, ft_bind_addr=None, ft_type=zmq.DEALER, bc_bind_addr=None, bc_conn_addr=None, bc_type=zmq.DEALER):
 		"""
 		Interface de base pour les device avec entrée/sortie.
@@ -217,4 +217,4 @@ class Proxy:
 		new_msg = self.backend_process_msg(msg)
 		#print("bc send", new_msg)
 		self.frontend.send_multipart(new_msg)
-'''
+
