@@ -24,6 +24,10 @@ class Server(Proxy):
 		self.logger.info("Backend\t%s", self._bc_addr)
 		self.logger.info("Publishing\t%s", self._pb_addr)
 		super(Server,self).start(block)
+
+	def close(self):
+		self.publisher.close()
+		super(Server,self).close()
 	
 	def frontend_process_msg(self, msg):
 		#print("frontend")
