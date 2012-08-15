@@ -2,7 +2,7 @@
 from .core import *
 import subprocess
 
-class IOAdapter(Client):
+class IOAdapter(BaseClient):
 	"""
 	Permet de faire le pont entre quelque chose derrière une interface io classique
 	par exemple subprocess.stdin et subprocess.stdout, et le monde zmq.

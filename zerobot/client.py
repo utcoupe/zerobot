@@ -2,7 +2,7 @@
 from .core import *
 
 
-class BlockRemoteClient:
+class Client:
 	def __init__(self, identity, conn_addr, remote_id, ctx=None):
 		self.remote_id = remote_id
 		self.ctx = ctx or zmq.Context()
@@ -52,7 +52,7 @@ class BlockRemoteClient:
 			return self._remote_call(name, args, kwargs, cb_fct, uid, block, timeout)
 		return auto_generated_remote_call
 	
-class RemoteClient(Client):
+class AsyncClient(BaseClient):
 	"""
 	Permet de faire des appels à une classe distante
 	"""
@@ -63,7 +63,7 @@ class RemoteClient(Client):
 		@param {str} remote_id identity du client distant
 		@param {zmq.Context} zmq ctx
 		"""
-		super(RemoteClient, self).__init__(identity, conn_addr, ctx)
+		super(AsyncClient, self).__init__(identity, conn_addr, ctx)
 		self.remote_id = remote_id
 		self._resp_events = {}
 		self._e_stop = threading.Event()
@@ -77,7 +77,7 @@ class RemoteClient(Client):
 		
 
 	def stop(self):
-		super(RemoteClient,self).stop()
+		super(AsyncClient,self).stop()
 		self._e_stop.set()
 
 	def _process_cb(self, fd, _ev):
@@ -91,7 +91,7 @@ class RemoteClient(Client):
 
 	def _process(self, fd, _ev):
 		msg = fd.recv_multipart()
-		#print('RemoteClient %s received: %s' % (self.identity, msg))
+		#print('AsyncClient %s received: %s' % (self.identity, msg))
 		self._cb_push.send(msg[1])
 
 	def _process_response(self, response):

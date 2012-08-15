@@ -9,7 +9,7 @@ from zerobot import *
 
 class _ServiceTest:
 	
-	class BasicClient(Client):
+	class BasicClient(BaseClient):
 		def _process(self, fd, _ev):
 			self.msg = fd.recv_multipart()
 	

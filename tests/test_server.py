@@ -12,7 +12,7 @@ class ServerTestCase(unittest.TestCase):
 	BACKEND_PORT	= 9001
 	LOG_PORT		= 9002
 	
-	class BasicClient(Client):
+	class BasicClient(BaseClient):
 		def _process(self, fd, _ev):
 			self.msg = fd.recv_multipart()
 

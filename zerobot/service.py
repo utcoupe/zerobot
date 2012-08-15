@@ -7,14 +7,14 @@ import traceback
 import inspect
 
 #signal.signal(signal.SIGINT, signal_handler)
-class Service(Client):
+class Service(BaseClient):
 	"""
 	Permet d'exposer les méthodes d'une classe à distance. Les requêtes sont
 	traitées séquentiellement, pour un traitement de requêtes en parallèle
 	voir la class AsyncService.
 	"""
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
-		Client.__init__(self, identity, conn_addr, ctx)
+		super(Service,self).__init__(identity, conn_addr, ctx)
 		self.exposed_obj = exposed_obj
 
 	def _process(self, fd, _ev):

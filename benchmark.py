@@ -34,8 +34,8 @@ class Cool:
 		time.sleep(1)
 		return "ok"
 
-#cool = zerobot.AsyncClassExposer("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=True)
-cool = zerobot.ClassExposer("cool", "tcp://localhost:8001", Cool())
+#cool = zerobot.AsyncService("cool", "tcp://localhost:8001", Cool(), init_workers=5, dynamic_workers=True)
+cool = zerobot.Service("cool", "tcp://localhost:8001", Cool())
 cool.start(False)
 """
 ctx = zmq.Context()
@@ -59,7 +59,7 @@ t.start()
 class ClientBenchmark(threading.Thread):
 	def __init__(self, identity, n_reqs, block):
 		threading.Thread.__init__(self)
-		self.client = zerobot.RemoteClient(identity, "tcp://localhost:8000", "cool")
+		self.client = zerobot.AsyncClient(identity, "tcp://localhost:8000", "cool")
 		self.client.start(False)
 		"""
 		ctx = zmq.Context()

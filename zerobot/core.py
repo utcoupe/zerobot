@@ -138,14 +138,14 @@ class Base(ioloop.IOLoop):
 	def __repr__(self):
 		return "%s(..)" % (self.__class__.__name__, )
 
-class Client(Base):
+class BaseClient(Base):
 	def __init__(self, identity, conn_addr, ctx=None):
 		"""
 		@param {str} identity identité du client
 		@param {str} conn_addr adresse sur laquelle se connecter
 		@param {zmq.Context} zmq context
 		"""
-		super(Client, self).__init__(ctx)
+		super(BaseClient, self).__init__(ctx)
 		self.identity = identity
 		self.conn_addr = conn_addr
 		self.socket = self.ctx.socket(zmq.DEALER)
@@ -155,7 +155,7 @@ class Client(Base):
 		self._to_close.append(self.socket)
 
 	def _process(self, fd, ev):
-		raise Exception("Client._process must be override")
+		raise Exception("BaseClient._process must be override")
 
 	def send_multipart(self, msg):
 		self.socket.send_multipart(msg)

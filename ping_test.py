@@ -30,10 +30,10 @@ if __name__ == "__main__":
 		def echo(self, m):
 			return m
 
-	cool = AsyncClassExposer("cool", "tcp://localhost:8081", Cool())
+	cool = Service("cool", "tcp://localhost:8081", Cool())
 	cool.start(False)
 	
-	remote_cool = RemoteClient("remote_cool", "tcp://localhost:8080", "cool")
+	remote_cool = Client("remote_cool", "tcp://localhost:8080", "cool")
 	remote_cool.start(False)
 
 	time.sleep(0.5)
