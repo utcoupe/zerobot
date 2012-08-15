@@ -1,7 +1,6 @@
 
 from .proxy import Proxy
 import zmq
-import zhelpers
 
 import logging
 from zmq.eventloop import ioloop
