@@ -7,7 +7,7 @@ from zerobot import *
 
 #import logging; logging.basicConfig(level=0)
 
-class _ClassExposerTest:
+class _ServiceTest:
 	
 	class BasicClient(Client):
 		def _process(self, fd, _ev):
@@ -80,9 +80,9 @@ class _ClassExposerTest:
 		return self.whole_response(response)
 		
 
-class ClassExposerTestCase(_ClassExposerTest, unittest.TestCase):
+class ServiceTestCase(_ServiceTest, unittest.TestCase):
 
-	KLASS = ClassExposer
+	KLASS = Service
 	
 	def test_basic(self):
 		# test Abc.ping
@@ -96,8 +96,8 @@ class ClassExposerTestCase(_ClassExposerTest, unittest.TestCase):
 		self.assertEqual(msg, self.response_hard_one())
 
 
-class AsyncClassExposerTestCase(_ClassExposerTest, unittest.TestCase):
-	KLASS = AsyncClassExposer
+class AsyncServiceTestCase(_ServiceTest, unittest.TestCase):
+	KLASS = AsyncService
 
 	def test_basic(self):
 		self.abc.dynamic_workers = False

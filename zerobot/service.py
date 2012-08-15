@@ -7,11 +7,11 @@ import traceback
 import inspect
 
 #signal.signal(signal.SIGINT, signal_handler)
-class ClassExposer(Client):
+class Service(Client):
 	"""
 	Permet d'exposer les méthodes d'une classe à distance. Les requêtes sont
 	traitées séquentiellement, pour un traitement de requêtes en parallèle
-	voir la class AsyncClassExposer.
+	voir la class AsyncService.
 	"""
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
 		Client.__init__(self, identity, conn_addr, ctx)
@@ -64,10 +64,10 @@ class ClassExposer(Client):
 		self.send_multipart([remote_id, response.pack()])
 
 	def __repr__(self):
-		return "ClassExposerWorker(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
+		return "ServiceWorker(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
 		
 
-class AsyncClassExposer(Base):
+class AsyncService(Base):
 	"""
 	Permet d'exposer les méthodes d'une classe à distance. Permet en plus
 	de lancer plusieurs méthodes bloquantes de la classe simultanément.
@@ -201,7 +201,7 @@ class AsyncClassExposer(Base):
 	
 	def add_worker(self):
 		worker_id = "Worker-%s-%s" % (self.identity, uuid.uuid1())
-		worker = ClassExposer(worker_id, self._bc_addr, self.exposed_obj, ctx=self.ctx)
+		worker = Service(worker_id, self._bc_addr, self.exposed_obj, ctx=self.ctx)
 		# démarage en mode non bloquant pour qu'ils soient dans des threads
 		worker.start(False)
 		self._free_workers.append(worker_id)
@@ -215,10 +215,10 @@ class AsyncClassExposer(Base):
 		return msg
 			
 	def frontend_process_msg(self, msg):
-		#print('ClassExposer %s received: %s' % (self.identity, msg))
+		#print('Service %s received: %s' % (self.identity, msg))
 		self.logger.debug("frontend recv %s", msg)
 		worker_id = self._free_workers.pop()
 		return [worker_id.encode()]+msg
 
 	def __repr__(self):
-		return "AsyncClassExposer(%s,%s,%s,..)" % (self.identity, self._ft_addr, self.exposed_obj)
+		return "AsyncService(%s,%s,%s,..)" % (self.identity, self._ft_addr, self.exposed_obj)
