@@ -65,3 +65,6 @@ class ServerTestCase(unittest.TestCase):
 		client2.close()
 		client3.close()
 		time.sleep(0.1)
+
+if __name__ == '__main__':
+    unittest.main()

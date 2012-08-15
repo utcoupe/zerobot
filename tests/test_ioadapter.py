@@ -26,3 +26,6 @@ class SubProcessAdapterTest(_IOAdapterTest, unittest.TestCase):
 	def test_basic(self):
 		msg = self.server.recv_multipart()
 		self.assertEqual(msg,[b"coucou\n"])
+
+if __name__ == '__main__':
+    unittest.main()

@@ -79,3 +79,5 @@ class ModifiedProxyTestCase(_ProxyTest):
 		if not msg: self.fail("client doesn't received the msg")
 		self.assertEqual(msg, [b"bye", b"dude", b"<3 nuclear <3"])
 		
+if __name__ == '__main__':
+    unittest.main()

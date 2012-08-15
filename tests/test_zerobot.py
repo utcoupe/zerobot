@@ -45,3 +45,5 @@ class ResponseTestCase(unittest.TestCase):
 		unpack = Response.unpack(pack)
 		self.assertEqual(self.r, unpack)
 
+if __name__ == '__main__':
+    unittest.main()

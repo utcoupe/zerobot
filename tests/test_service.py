@@ -121,3 +121,5 @@ class AsyncServiceTestCase(_ServiceTest, unittest.TestCase):
 		self.assertGreaterEqual(len(self.abc._workers), current_n_workers*4)
 		time.sleep(0.75)
 		
+if __name__ == '__main__':
+    unittest.main()
