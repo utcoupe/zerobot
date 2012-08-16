@@ -4,7 +4,7 @@
 
 #include "json/json.h"
 #include "zhelpers.hpp"
-#include "../../../services/cpp/service.hpp"
+#include "../../../cpp/service.hpp"
 
 using namespace std;
 
