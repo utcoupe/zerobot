@@ -17,7 +17,7 @@ class Server(Proxy):
 		self.publisher.bind(self._pb_addr)
 		self._to_close.append(self.publisher)
 
-	def start(self, block=False):
+	def start(self, block=True):
 		self.logger.info("Server start")
 		self.logger.info("Listening\t%s", self._ft_addr)
 		self.logger.info("Backend\t%s", self._bc_addr)

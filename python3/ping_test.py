@@ -1,5 +1,4 @@
 
-
 from zerobot import *
 
 
@@ -32,8 +31,9 @@ if __name__ == "__main__":
 
 	cool = Service("cool", "tcp://localhost:8081", Cool())
 	cool.start(False)
+	time.sleep(100000)
 	
-	remote_cool = Client("remote_cool", "tcp://localhost:8080", "cool")
+	"""remote_cool = Client("remote_cool", "tcp://localhost:8080", "cool")
 	remote_cool.start(False)
 
 	time.sleep(0.5)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 		remote_cool.stop()
 		cool.stop()
 		server.stop()
-		time.sleep(0.2)
+		time.sleep(0.2)"""
 	"""
 	print(remote_cool.ping(56,block=True))
 	print(remote_cool.ping(56,block=True))

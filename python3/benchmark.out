@@ -1,0 +1,20 @@
+10 clients, 10 reqs block (tot:100reqs) : 0.10s, average : 1.02ms
+10 clients, 500 reqs block (tot:5000reqs) : 4.73s, average : 0.95ms
+10 clients, 1000 reqs block (tot:10000reqs) : 18.84s, average : 1.88ms
+10 clients, 2000 reqs block (tot:20000reqs) : 23.98s, average : 1.20ms
+50 clients, 10 reqs block (tot:500reqs) : 0.47s, average : 0.95ms
+50 clients, 500 reqs block (tot:25000reqs) : 24.92s, average : 1.00ms
+50 clients, 1000 reqs block (tot:50000reqs) : 49.10s, average : 0.98ms
+50 clients, 2000 reqs block (tot:100000reqs) : 98.28s, average : 0.98ms
+10 clients, 10 reqs async (tot:100reqs) : 0.07s, average : 0.73ms
+10 clients, 500 reqs async (tot:5000reqs) : 8.91s, average : 1.78ms
+10 clients, 1000 reqs async (tot:10000reqs) : 8.64s, average : 0.86ms
+50 clients, 10 reqs async (tot:500reqs) : 0.42s, average : 0.84ms
+50 clients, 500 reqs async (tot:25000reqs) : 22.04s, average : 0.88ms
+50 clients, 1000 reqs async (tot:50000reqs) : 44.37s, average : 0.89ms
+
+10 clients, 10 reqs block (tot:100reqs) : 0.13s, average : 1.26ms, reqs/s : 796
+10 clients, 1000 reqs block (tot:10000reqs) : 9.61s, average : 0.96ms, reqs/s : 1041
+10 clients, 2000 reqs block (tot:20000reqs) : 19.97s, average : 1.00ms, reqs/s : 1002
+10 clients, 10 reqs async (tot:100reqs) : 0.12s, average : 1.22ms, reqs/s : 822
+10 clients, 1000 reqs async (tot:10000reqs) : 8.25s, average : 0.83ms, reqs/s : 1212
