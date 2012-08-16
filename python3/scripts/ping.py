@@ -78,6 +78,8 @@ try:
 		for i in range(options.n_reqs):
 			loop()
 except KeyboardInterrupt:
-	print("%s packets transmitted, time=%0.3fms" % (n,tot_time*1000))
-	print("min/avg/max = %0.3f/%0.3f/%0.3f ms" % (t_min*1000, tot_time/n*1000, t_max*1000))
+	pass
+
+print("%s packets transmitted, time=%0.3fms" % (n,tot_time*1000))
+print("min/avg/max = %0.3f/%0.3f/%0.3f ms" % (t_min*1000, tot_time/n*1000, t_max*1000))
 	
