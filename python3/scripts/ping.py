@@ -13,10 +13,10 @@ import time
 usage = "usage: %prog [options]"
 parser = optparse.OptionParser(usage,version="%prog 0.0.1")
 parser.add_option("-c", "--connect",
-	action="store", dest="connect", default=None,
-	help="connect. ex : tcp:localhost//*:8000")
+	action="store", dest="connect", default="tcp://localhost:5000",
+	help="connect. ex : tcp:localhost:5000")
 parser.add_option("-r", "--remote-id",
-	action="store", dest="remote_id", default=None,
+	action="store", dest="remote_id", default="time_service",
 	help="remote identity")
 parser.add_option("-i", "--identity",
 	action="store", dest="identity", default="Pinger",
@@ -43,8 +43,9 @@ parser.add_option("-l", "--log_lvl",
 
 logging.basicConfig(level=options.log_lvl)
 
-
-
+print('Pinger id            ',options.identity)
+print('Host                 ',options.connect)
+print('Remote service id    ',options.remote_id)
 remote_cool = zerobot.Client(options.identity, options.connect, options.remote_id)
 remote_cool.start(False)
 time.sleep(0.5)
