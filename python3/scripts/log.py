@@ -39,7 +39,8 @@ print('Connected !')
 
 try:
 	while 1:
-		print(socket.recv())
+		c_from, c_to, msg = socket.recv_multipart()
+		print('{:<25}{:<25}{}'.format('From : '+c_from.decode(), 'To : '+c_to.decode(), 'Msg : '+msg.decode()))
 except:
 	pass
 
