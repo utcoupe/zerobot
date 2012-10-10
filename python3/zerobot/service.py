@@ -63,6 +63,19 @@ class Service(BaseClient):
 		response = Response(request.uid, r, err)
 		self.send_multipart([remote_id, response.pack()])
 
+	def help(self, f=None):
+		if not f:
+			# aide globale
+			return dir(self.exposed_obj)
+		else:
+			if hasattr(self.exposed_obj, f):
+				doc = getattr(self.exposed_obj,f).__doc__
+				if not doc:
+					doc = 'No documentation available'
+				return doc
+			else:
+				return str(self.exposed_obj)+' has no method '+f
+	
 	def __repr__(self):
 		return "ServiceWorker(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
 		
