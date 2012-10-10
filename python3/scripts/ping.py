@@ -46,8 +46,8 @@ logging.basicConfig(level=options.log_lvl)
 print('Pinger id            ',options.identity)
 print('Host                 ',options.connect)
 print('Remote service id    ',options.remote_id)
-remote_cool = zerobot.Client(options.identity, options.connect, options.remote_id)
-remote_cool.start(False)
+client = zerobot.Client(options.identity, options.connect, options.remote_id)
+client.start(False)
 time.sleep(0.5)
 
 args = eval(options.args)
@@ -61,7 +61,7 @@ t_max = -1
 def loop():
 	global tot_time,n,t_min,t_max
 	start = time.time()
-	r = remote_cool._remote_call(options.fct,args,block=True)
+	r = client._remote_call(options.fct,args,block=True)
 	ellapsed = time.time() - start
 	tot_time += ellapsed
 	n += 1
