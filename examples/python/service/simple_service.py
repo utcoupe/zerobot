@@ -12,7 +12,7 @@ import time
 class MyService:
 	def ping(self, num):
 		""" Pong ? """
-		return num+42
+		return int(num)+42
 
 	def time(self):
 		"""

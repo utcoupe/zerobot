@@ -35,7 +35,7 @@ logging.basicConfig(level=options.log_lvl)
 
 class TimeService:
 	def ping(self, num):
-		return num+42
+		return int(num)+42
 
 	def time(self):
 		return time.time()
