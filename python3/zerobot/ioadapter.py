@@ -30,7 +30,7 @@ class IOAdapter(BaseClient):
 		""" Traitement du message venant de l'io vers le socket """
 		return msg
 
-	def write(self):
+	def write(self, msg):
 		""" Écriture de l'io """
 		raise Exception("IOAdapter.write must be override")
 
@@ -41,16 +41,17 @@ class IOAdapter(BaseClient):
 	def read_loop(self):
 		while not self._e_stop.is_set():
 			msg = self.read()
-			msg = self.process_sock_to_io(msg)
+			msg = self.process_io_to_sock(msg)
 			if isinstance(msg,list):
 				self.send_multipart(msg)
-			else:
+			elif msg:
 				self.send(msg)
 
 	def _process(self, fd, _ev):
 		msg = fd.recv_multipart()
-		msg = self.process_io_to_sock(msg)
-		self.write(msg)
+		msg = self.process_sock_to_io(msg)
+		if msg:
+			self.write(msg)
 
 class SubProcessAdapter(IOAdapter):
 	def __init__(self, identity, conn_addr, popen_args, ctx=None):
@@ -61,6 +62,6 @@ class SubProcessAdapter(IOAdapter):
 		msg = self.p.stdout.readline()
 		return msg
 
-	def write(self):
-		self.p.stdin.write()
+	def write(self, msg):
+		self.p.stdin.write(msg)
 
