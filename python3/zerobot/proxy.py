@@ -173,15 +173,15 @@ class Proxy(Base):
 					break # Interrupted
 				
 				if frontend in items:
-					msg = frontend.recv_multipart()
-					new_msg = self.frontend_process_msg(msg)
-					self.backend.send_multipart(new_msg)
-					#self.frontend_handler(frontend, items[frontend])
+					#msg = frontend.recv_multipart()
+					#new_msg = self.frontend_process_msg(msg)
+					#self.backend.send_multipart(new_msg)
+					self.frontend_handler(frontend, items[frontend])
 				if backend in items:
-					msg = backend.recv_multipart()
-					new_msg = self.backend_process_msg(msg)
-					self.frontend.send_multipart(new_msg)
-					#self.backend_handler(backend, items[backend])
+					#msg = backend.recv_multipart()
+					#new_msg = self.backend_process_msg(msg)
+					#self.frontend.send_multipart(new_msg)
+					self.backend_handler(backend, items[backend])
 				
 	
 	def frontend_process_msg(self, msg):
@@ -194,12 +194,13 @@ class Proxy(Base):
 		
 	def frontend_handler(self, fd, _ev):
 		"""
-		Fonction pouvant être surchargée pur changer le comportement du proxy.
+		Fonction pouvant être surchargée pour changer le comportement du proxy.
 		"""
 		msg = fd.recv_multipart()
 		new_msg = self.frontend_process_msg(msg)
-		#print("ft send", new_msg)
-		self.backend.send_multipart(new_msg)
+		if new_msg:
+			#print("ft send", new_msg)
+			self.backend.send_multipart(new_msg)
 
 	def backend_process_msg(self, msg):
 		"""
@@ -215,6 +216,7 @@ class Proxy(Base):
 		"""
 		msg = fd.recv_multipart()
 		new_msg = self.backend_process_msg(msg)
-		#print("bc send", new_msg)
-		self.frontend.send_multipart(new_msg)
+		if new_msg:
+			#print("bc send", new_msg)
+			self.frontend.send_multipart(new_msg)
 

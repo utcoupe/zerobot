@@ -80,13 +80,14 @@ class Service(BaseClient):
 		return "ServiceWorker(%s,%s,%s,..)" % (self.identity, self.conn_addr, self.exposed_obj)
 		
 
-class AsyncService(Base):
+class AsyncService(Proxy):
 	"""
 	Permet d'exposer les méthodes d'une classe à distance. Permet en plus
 	de lancer plusieurs méthodes bloquantes de la classe simultanément.
 	Des workers sont utilisés, chaque worker exécute une requête<=>méthode de la class exposée.
 	"""
-	def __init__(self, identity, conn_addr, exposed_obj, ctx=None, init_workers=5, max_workers=50, min_workers=None, dynamic_workers=False):
+	def __init__(self, identity, conn_addr, exposed_obj, ctx=None,
+			init_workers=5, max_workers=50, min_workers=None, dynamic_workers=False):
 		"""
 		@param {str} identity nom unique du client
 		@param {str} conn_addr l'adresse du backend du serveur
@@ -97,26 +98,14 @@ class AsyncService(Base):
 		@param {int} min_workers si non précisé est égale à init_workers
 		@param {bool|False} dynamic_workers autorisé l'ajout/suppression de workers automatiquement
 		"""
-		# zmq context
-		self.ctx = ctx or zmq.Context()
-		self._ctx_is_mine = ctx is None
-		# sauvegarde de l'identité
-		self.identity = identity
-		# création ds sockets
-		self.frontend = self.ctx.socket(zmq.DEALER)
-		self.frontend.setsockopt(zmq.IDENTITY, self.identity.encode())
-		self.backend = self.ctx.socket(zmq.ROUTER)
-		self.backend.setsockopt(zmq.IDENTITY, self.identity.encode())
 		# sauvegarde des adresses
-		self._ft_addr = conn_addr
-		self._bc_addr = "inproc://workers-%s"%self.identity
-		# bind/connect
-		self.frontend.connect(self._ft_addr)
-		self.backend.bind(self._bc_addr)
-		# poller
-		self.poller = zmq.Poller()
-		self.poller.register(self.frontend, zmq.POLLIN)
-		self.poller.register(self.backend, zmq.POLLIN)
+		super(AsyncService, self).__init__(
+			identity, ctx,
+			ft_conn_addr=conn_addr,
+			ft_type=zmq.DEALER,
+			bc_bind_addr="inproc://workers-%s"%identity,
+			bc_type=zmq.ROUTER
+		)
 		#
 		self.exposed_obj = exposed_obj
 		self.min_workers = min_workers or init_workers
@@ -128,43 +117,16 @@ class AsyncService(Base):
 		for _ in range(init_workers):
 			self.add_worker()
 		self._timeout_can_reduce_workers = 0
-		#self.loop = FdLoop({self.backend: self.backend_handler, self.frontend: self.frontend_handler})
-		# events
-		self._e_stop = threading.Event()
-		# logger
-		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
-	
-	def _loop(self):
-		while not self._e_stop.is_set():
-			frontend,backend = self.frontend,self.backend
-			try:
-				socks = dict(self.poller.poll())
-			except Exception as ex:
-				if not self._e_stop.is_set():
-					self.logger.error(ex, exc_info=True)
-				else: continue
 
-			# Handle worker activity on backend
-			if (backend in socks and socks[backend] == zmq.POLLIN):
-				msg = backend.recv_multipart()
-				new_msg = self.backend_process_msg(msg)
-				if new_msg:
-					self.logger.debug("send to frontend %s",msg)
-					self.frontend.send_multipart(new_msg)
-			
-			# poll on frontend only if workers are available
-			if len(self._free_workers) > 0:
-				if (frontend in socks and socks[frontend] == zmq.POLLIN):
-					msg = frontend.recv_multipart()
-					new_msg = self.frontend_process_msg(msg)
-					if new_msg:
-						self.logger.debug("send to backend %s",msg)
-						self.backend.send_multipart(new_msg)
-				if self.dynamic_workers and len(self._free_workers) > 0:
-					self.ungrow()
-			elif self.dynamic_workers:
-				self.grow()
-			
+	def frontend_handler(self, fd, ev):
+		# poll on frontend only if workers are available
+		if len(self._free_workers) > 0:
+			super(AsyncService, self).frontend_handler(fd, ev)
+			if self.dynamic_workers and len(self._free_workers) > 0:
+				self.ungrow()
+		elif self.dynamic_workers:
+			self.grow()
+	
 	def grow(self):
 		# ajouter des workers si on galère trop
 		n_workers = len(self._workers)
@@ -187,29 +149,12 @@ class AsyncService(Base):
 				del self._workers[worker_id]
 			self.logger.info("%s ungrows %s workers", self.identity,len(self._workers))
 			self._timeout_can_reduce_workers = time.time()+10
-	
-	def start(self, block=True):
-		self.logger.info("%s started", self)
-		if block:
-			self._loop()
-		else:
-			t = threading.Thread(target=self._loop,name="%s._loop"%self)
-			t.setDaemon(True)
-			t.start()
-
-	def stop(self):
-		self.logger.info("stop event received")
-		self._e_stop.set()
 
 	def close(self):
 		self.logger.info("close event received")
-		self.stop()
 		for worker in self._workers.values():
 			worker.close()
-		self.frontend.close()
-		self.backend.close()
-		if self._ctx_is_mine:
-			self.ctx.term()
+		super(AsyncService, self).close()
 		self.logger.info("closed")
 	
 	def add_worker(self):
