@@ -108,8 +108,15 @@ class Base(ioloop.IOLoop):
 		self._ctx_is_mine = ctx is None
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 		self._to_close = []
+		self.__is_closed = False
 
+	def __del__(self):
+		if not self.__is_closed:
+			self.close()
+	
 	def start(self, block=True):
+		if self.__is_closed:
+			raise Exception("This instance has been closed !")
 		self.logger.info("%s started", self)
 		if block:
 			super(Base,self).start()
@@ -132,7 +139,8 @@ class Base(ioloop.IOLoop):
 			for sock in self._to_close:
 				sock.close()
 		if self._ctx_is_mine:
-			self.ctx.term()
+			del self.ctx
+		self.__is_closed = True
 		self.logger.info("closed")
 
 	def __repr__(self):
