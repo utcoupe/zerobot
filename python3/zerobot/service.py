@@ -153,6 +153,7 @@ class AsyncService(Proxy):
 	def close(self):
 		self.logger.info("close event received")
 		for worker in self._workers.values():
+			self.logger.info("close %s" % worker)
 			worker.close()
 		super(AsyncService, self).close()
 		self.logger.info("closed")
