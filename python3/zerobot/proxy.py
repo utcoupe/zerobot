@@ -131,6 +131,8 @@ class Proxy(Base):
 		self.frontend.setsockopt(zmq.IDENTITY, self.identity.encode())
 		self.backend = self.ctx.socket(bc_type)
 		self.backend.setsockopt(zmq.IDENTITY, self.identity.encode())
+		self._to_close.append(self.frontend)
+		self._to_close.append(self.backend)
 		# sauvegarde des adresses
 		self._ft_addr = ft_conn_addr if ft_conn_addr else ft_bind_addr
 		self._bc_addr = bc_bind_addr if bc_bind_addr else bc_conn_addr
@@ -146,16 +148,11 @@ class Proxy(Base):
 
 		self._e_stop = threading.Event()
 
+
 	def stop(self):
 		self._e_stop.set()
-
-	def close(self):
-		self.stop()
-		self.frontend.close()
-		self.backend.close()
-		if self._ctx_is_mine:
-			self.ctx.term()
-
+		super(Proxy, self).stop()
+	
 	def start(self, block=False):
 		if not block:
 			t = threading.Thread(target=self.start, args=(True,))
