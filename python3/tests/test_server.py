@@ -6,6 +6,7 @@ import time
 from zerobot import *
 
 
+#import logging; logging.basicConfig(level=0)
 
 class ServerTestCase(unittest.TestCase):
 	FRONTEND_PORT	= 9000
@@ -17,17 +18,17 @@ class ServerTestCase(unittest.TestCase):
 			self.msg = fd.recv_multipart()
 
 	def test_launch(self):
-		self.server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,"tcp://*:%s"%self.LOG_PORT)
-		self.server.start(False)
+		server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,"tcp://*:%s"%self.LOG_PORT)
+		server.start(False)
 		time.sleep(0.5)
-		self.server.close()
+		server.close()
 		time.sleep(0.1)
 
 	def test_route(self):
 		msg_content = b"coucou"
 		# lancement du serveur
-		self.server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,"tcp://*:%s"%self.LOG_PORT)
-		self.server.start(False)
+		server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,"tcp://*:%s"%self.LOG_PORT)
+		server.start(False)
 		# lancement des clients
 		client1 = self.BasicClient("Client-1", "tcp://*:%s"%self.FRONTEND_PORT)
 		client2 = self.BasicClient("Client-2", "tcp://*:%s"%self.BACKEND_PORT)
@@ -59,8 +60,8 @@ class ServerTestCase(unittest.TestCase):
 		# vérification de la reception
 		self.assertTrue(hasattr(client1,'msg'))
 		self.assertEqual([client2.identity.encode(), msg_content], client1.msg)
-		
-		self.server.close()
+
+		server.close()
 		client1.close()
 		client2.close()
 		client3.close()
