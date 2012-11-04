@@ -7,6 +7,20 @@ class Client(BaseClient):
 		super(Client, self).__init__(identity, conn_addr, ctx)
 		self.remote_id = remote_id
 
+		self.cb_fct = None
+		self.response = None
+		self.ev_response = threading.Event()
+
+	def reset_response(self, cb_fct=None):
+		self.cb_fct = cb_fct
+		self.response = None
+		self.ev_response.clear()
+
+	def _process(self, fd, ev):
+		msg = fd.recv_multipart()
+		self.response = Response.unpack(msg[1])
+		self.ev_response.set()
+
 	def start(self, block=False):
 		super(Client, self).start(block)
 
@@ -23,12 +37,14 @@ class Client(BaseClient):
 	def _remote_call(self, fct, args=[], kwargs={}, cb_fct=None, uid=None, block=True, timeout=None):
 		if uid is None: uid = self._uid()
 		request = Request(uid, fct, args, kwargs)
+		self.reset_response(cb_fct)
 		self.send_multipart([self.remote_id.encode(), request.pack()])
-		msg = self.socket.recv_multipart()
-		response = Response.unpack(msg[1])
-		if response.error:
+		self.ev_response.wait(timeout)
+		if not self.ev_response.is_set():
+			raise Exception("timeout")
+		if self.response.error:
 			raise ZeroBotException(response.error)
-		return response.data
+		return self.response.data
 	
 	def __getattr__(self, name):
 		def auto_generated_remote_call(*args, block=True, timeout=None, cb_fct=None, uid=None, **kwargs):
