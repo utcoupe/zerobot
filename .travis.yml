@@ -6,5 +6,4 @@ install: "pip install -r python3/requirements.txt --use-mirrors"
 # command to run tests
 before_script:
   - cd python3
-  - alias python3=python
 script: tests/runall.py
