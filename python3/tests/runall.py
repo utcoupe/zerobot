@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import os
 path = os.path.abspath(os.path.dirname(__file__))
