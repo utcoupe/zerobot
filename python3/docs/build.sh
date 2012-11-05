@@ -1,1 +1,1 @@
-sphinx-build -a -E -b html docs $1
+sphinx-build -a -E -b html $1 $2
