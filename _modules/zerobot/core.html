@@ -152,15 +152,18 @@
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ev</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span>
 
 </div></div>
-<div class="viewcode-block" id="Base"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base">[docs]</a><span class="k">class</span> <span class="nc">Base</span><span class="p">(</span><span class="n">ioloop</span><span class="o">.</span><span class="n">IOLoop</span><span class="p">):</span>
+<div class="viewcode-block" id="Base"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base">[docs]</a><span class="k">class</span> <span class="nc">Base</span><span class="p">:</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-		<span class="n">ioloop</span><span class="o">.</span><span class="n">IOLoop</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span> <span class="o">=</span> <span class="n">ioloop</span><span class="o">.</span><span class="n">IOLoop</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">ctx</span> <span class="o">=</span> <span class="n">ctx</span> <span class="ow">or</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_ctx_is_mine</span> <span class="o">=</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="bp">None</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="o">+</span><span class="s">&#39;.&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_to_close</span> <span class="o">=</span> <span class="p">[]</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">__is_closed</span> <span class="o">=</span> <span class="bp">False</span>
 
+<div class="viewcode-block" id="Base.add_handler"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base.add_handler">[docs]</a>	<span class="k">def</span> <span class="nf">add_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">add_handler</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+	</div>
 	<span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_closed</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -170,21 +173,21 @@
 			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;This instance has been closed !&quot;</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> started&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">block</span><span class="p">:</span>
-			<span class="nb">super</span><span class="p">(</span><span class="n">Base</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 		<span class="k">else</span><span class="p">:</span>
-			<span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="nb">super</span><span class="p">(</span><span class="n">Base</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;Thread-</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="bp">self</span><span class="p">)</span>
+			<span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;Thread-</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="bp">self</span><span class="p">)</span>
 			<span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 			<span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="Base.stop"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base.stop">[docs]</a>	<span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;stop event received&quot;</span><span class="p">)</span>
-		<span class="nb">super</span><span class="p">(</span><span class="n">Base</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="Base.close"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base.close">[docs]</a>	<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_fds</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;close event received&quot;</span><span class="p">)</span>
 		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
-		<span class="nb">super</span><span class="p">(</span><span class="n">Base</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">all_fds</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">all_fds</span><span class="p">)</span>
 		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">all_fds</span><span class="p">:</span>
 			<span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_close</span><span class="p">:</span>

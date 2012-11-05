@@ -88,7 +88,7 @@
 <span class="c"># output :</span>
 <span class="c"># 42 &lt;- result of ping</span>
 <span class="c"># 1  &lt;- result of sleep</span>
-<span class="n">client</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="c"># raise Exception</span>
 </pre></div>
 </div>
@@ -142,7 +142,7 @@ elle n&#8217;est pas non plus threadsafe. Pour cela voir <a class="reference int
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
 <dl class="method">
 <dt id="zerobot.core.Base.add_handler">
-<tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="headerlink" href="#zerobot.core.Base.add_handler" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Base.add_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Base.add_handler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">

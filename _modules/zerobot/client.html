@@ -62,10 +62,13 @@
 <span class="sd">		client.saymeHello()</span>
 <span class="sd">		#etc...</span>
 
-<span class="sd">	Attention c&#39;est classe n&#39;est pas faite pour les appels asynchrones,</span>
-<span class="sd">	elle n&#39;est pas non plus threadsafe. Pour cela voir :class:`zerobot.client.AsyncClient`.</span>
+<span class="sd">	.. warning::</span>
+<span class="sd">	</span>
+<span class="sd">		Attention c&#39;est classe n&#39;est pas faite pour les appels asynchrones,</span>
+<span class="sd">		elle n&#39;est pas non plus threadsafe. Pour cela voir :class:`zerobot.client.AsyncClient`.</span>
 
 <span class="sd">	Il est possible de passe plusieurs keyword arguments lors de l&#39;appel d&#39;une fonction distance:</span>
+<span class="sd">	</span>
 <span class="sd">	* uid : preciser l&#39;id de la request</span>
 <span class="sd">	* timeout : sile service ne repond pas, une exception sera levée</span>
 <span class="sd">	&quot;&quot;&quot;</span>
@@ -123,11 +126,30 @@
 
 <span class="sd">	Voir aussi :class:`zerobot.client.Client`.</span>
 
-<span class="sd">	Il est possible de passer plusieurs arguments:</span>
+<span class="sd">	Il est possible de passer plusieurs arguments lors de l&#39;appel d&#39;une fonction distance:</span>
+<span class="sd">	</span>
 <span class="sd">	* uid : id de la request</span>
 <span class="sd">	* block : rendre l&#39;appel bloquand ou non</span>
 <span class="sd">	* timeout : (fonctionne seulement si block=True) si le service ne repond pas, une exception sera levée</span>
 <span class="sd">	* cb_fct : preciser un callback qui prend en parametre un :class:`zerobot.core.Response`</span>
+
+<span class="sd">	Par exemple::</span>
+<span class="sd">	</span>
+<span class="sd">		def cb(response):</span>
+<span class="sd">			if response.error:</span>
+<span class="sd">				print(&quot;Une erreur est survenue : %s&quot; % response.error)</span>
+<span class="sd">			else:</span>
+<span class="sd">				print(response.data)</span>
+<span class="sd">		</span>
+<span class="sd">		client = Client(&#39;monClient&#39;, &#39;tcp://localhost:5000&#39;, &#39;monService&#39;)</span>
+<span class="sd">		client.start(False)</span>
+<span class="sd">		client.sleep(1, cb=cb, block=False)</span>
+<span class="sd">		client.echo(42, cb=cb, block=False)</span>
+<span class="sd">		# output :</span>
+<span class="sd">		# 42 &lt;- result of ping</span>
+<span class="sd">		# 1  &lt;- result of sleep</span>
+<span class="sd">		client.sleep(3, timeout=1, block=True)</span>
+<span class="sd">		# raise Exception</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">remote_id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
