@@ -101,15 +101,18 @@ class ResponseEvent:
 		return self._ev.is_set()
 
 
-class Base(ioloop.IOLoop):
+class Base:
 	def __init__(self, ctx=None):
-		ioloop.IOLoop.__init__(self)
+		self.ioloop = ioloop.IOLoop()
 		self.ctx = ctx or zmq.Context()
 		self._ctx_is_mine = ctx is None
 		self.logger = logging.getLogger(__name__+'.'+self.__class__.__name__)
 		self._to_close = []
 		self.__is_closed = False
 
+	def add_handler(self, fd, cb, t):
+		self.ioloop.add_handler(fd, cb, t)
+	
 	def __del__(self):
 		if not self.__is_closed:
 			self.close()
@@ -119,21 +122,21 @@ class Base(ioloop.IOLoop):
 			raise Exception("This instance has been closed !")
 		self.logger.info("%s started", self)
 		if block:
-			super(Base,self).start()
+			self.ioloop.start()
 		else:
-			t = threading.Thread(target=super(Base,self).start, name="Thread-%s"%self)
+			t = threading.Thread(target=self.ioloop.start, name="Thread-%s"%self)
 			t.setDaemon(True)
 			t.start()
 
 	def stop(self):
 		self.logger.info("stop event received")
-		super(Base,self).stop()
+		self.ioloop.stop()
 
 	def close(self, all_fds=False):
 		self.stop()
 		self.logger.info("close event received")
 		time.sleep(0.05)
-		super(Base,self).close(all_fds)
+		self.ioloop.close(all_fds)
 		time.sleep(0.05)
 		if not all_fds:
 			for sock in self._to_close:
