@@ -12,8 +12,15 @@ class Client(BaseClient):
 		client.saymeHello()
 		#etc...
 
-	Attention c'est classe n'est pas faite pour les appels asynchrones,
-	alle n'est pas non plus threadsafe. Pour cela voir :class:`zerobot.client.AsyncClient`.
+	.. warning::
+	
+		Attention c'est classe n'est pas faite pour les appels asynchrones,
+		elle n'est pas non plus threadsafe. Pour cela voir :class:`zerobot.client.AsyncClient`.
+
+	Il est possible de passe plusieurs keyword arguments lors de l'appel d'une fonction distance:
+	
+	* uid : preciser l'id de la request
+	* timeout : sile service ne repond pas, une exception sera levée
 	"""
 	def __init__(self, identity, conn_addr, remote_id, ctx=None):
 		super(Client, self).__init__(identity, conn_addr, ctx)
@@ -68,6 +75,31 @@ class AsyncClient(BaseClient):
 	Permet de faire des appels à une classe distante.
 
 	Voir aussi :class:`zerobot.client.Client`.
+
+	Il est possible de passer plusieurs arguments lors de l'appel d'une fonction distance:
+	
+	* uid : id de la request
+	* block : rendre l'appel bloquand ou non
+	* timeout : (fonctionne seulement si block=True) si le service ne repond pas, une exception sera levée
+	* cb_fct : preciser un callback qui prend en parametre un :class:`zerobot.core.Response`
+
+	Par exemple::
+	
+		def cb(response):
+			if response.error:
+				print("Une erreur est survenue : %s" % response.error)
+			else:
+				print(response.data)
+		
+		client = Client('monClient', 'tcp://localhost:5000', 'monService')
+		client.start(False)
+		client.sleep(1, cb=cb, block=False)
+		client.echo(42, cb=cb, block=False)
+		# output :
+		# 42 <- result of ping
+		# 1  <- result of sleep
+		client.sleep(3, timeout=1, block=True)
+		# raise Exception
 	"""
 	def __init__(self, identity, conn_addr, remote_id, ctx=None):
 		"""
