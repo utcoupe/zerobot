@@ -53,7 +53,7 @@
 
 
 <span class="k">class</span> <span class="nc">Client</span><span class="p">(</span><span class="n">BaseClient</span><span class="p">):</span>
-<div class="viewcode-block" id="Client"><a class="viewcode-back" href="../../zerobot.html#zerobot.client.Client">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Client"><a class="viewcode-back" href="../../zerobot.client.html#zerobot.client.Client">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Permet d&#39;appeler un service::</span>
 
 <span class="sd">		client = Client(&#39;monClient&#39;, &#39;tcp://localhost:5000&#39;, &#39;monService&#39;)</span>
@@ -81,7 +81,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">ev_response</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 
 	<span class="k">def</span> <span class="nf">reset_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cb_fct</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-<div class="viewcode-block" id="Client.reset_response"><a class="viewcode-back" href="../../zerobot.html#zerobot.client.Client.reset_response">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">cb_fct</span> <span class="o">=</span> <span class="n">cb_fct</span>
+<div class="viewcode-block" id="Client.reset_response"><a class="viewcode-back" href="../../zerobot.client.html#zerobot.client.Client.reset_response">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">cb_fct</span> <span class="o">=</span> <span class="n">cb_fct</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="bp">None</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">ev_response</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
@@ -91,10 +91,10 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">ev_response</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 
 	<span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-<div class="viewcode-block" id="Client.start"><a class="viewcode-back" href="../../zerobot.html#zerobot.client.Client.start">[docs]</a>		<span class="nb">super</span><span class="p">(</span><span class="n">Client</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+<div class="viewcode-block" id="Client.start"><a class="viewcode-back" href="../../zerobot.client.html#zerobot.client.Client.start">[docs]</a>		<span class="nb">super</span><span class="p">(</span><span class="n">Client</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
 
 	<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="Client.close"><a class="viewcode-back" href="../../zerobot.html#zerobot.client.Client.close">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+<div class="viewcode-block" id="Client.close"><a class="viewcode-back" href="../../zerobot.client.html#zerobot.client.Client.close">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx_is_mine</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">term</span><span class="p">()</span>
@@ -121,7 +121,7 @@
 		<span class="k">return</span> <span class="n">auto_generated_remote_call</span>
 	
 <span class="k">class</span> <span class="nc">AsyncClient</span><span class="p">(</span><span class="n">BaseClient</span><span class="p">):</span></div>
-<div class="viewcode-block" id="AsyncClient"><a class="viewcode-back" href="../../zerobot.html#zerobot.client.AsyncClient">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AsyncClient"><a class="viewcode-back" href="../../zerobot.client.html#zerobot.client.AsyncClient">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Permet de faire des appels à une classe distante.</span>
 
 <span class="sd">	Voir aussi :class:`zerobot.client.Client`.</span>

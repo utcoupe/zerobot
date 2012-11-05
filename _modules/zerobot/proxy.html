@@ -102,10 +102,10 @@
 <span class="sd">		else:</span>
 <span class="sd">			self.backend.bind(bc_bind_addr)</span>
 <span class="sd">		# handlers</span>
-<span class="sd">		self.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)</span>
-<span class="sd">		self.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)</span>
+<span class="sd">		self.add_handler(self.frontend, self._frontend_handler, ioloop.IOLoop.READ)</span>
+<span class="sd">		self.add_handler(self.backend, self._backend_handler, ioloop.IOLoop.READ)</span>
 
-<span class="sd">	def frontend_process_msg(self, msg):</span>
+<span class="sd">	def _frontend_process_msg(self, msg):</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 <span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
 <span class="sd">		Cette fonctione est appellée lorsque le socket frontend reçoit un message.</span>
@@ -113,17 +113,17 @@
 <span class="sd">		&quot;&quot;&quot;</span>
 <span class="sd">		return msg</span>
 <span class="sd">		</span>
-<span class="sd">	def frontend_handler(self, fd, _ev):</span>
+<span class="sd">	def _frontend_handler(self, fd, _ev):</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 <span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 <span class="sd">		msg = fd.recv_multipart()</span>
-<span class="sd">		new_msg = self.frontend_process_msg(msg)</span>
+<span class="sd">		new_msg = self._frontend_process_msg(msg)</span>
 <span class="sd">		if new_msg:</span>
 <span class="sd">			#print(&quot;ft send&quot;, new_msg)</span>
 <span class="sd">			self.backend.send_multipart(new_msg)</span>
 
-<span class="sd">	def backend_process_msg(self, msg):</span>
+<span class="sd">	def _backend_process_msg(self, msg):</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 <span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
 <span class="sd">		Cette fonctione est appellée lorsque le socket backend reçoit un message.</span>
@@ -131,12 +131,12 @@
 <span class="sd">		&quot;&quot;&quot;</span>
 <span class="sd">		return msg</span>
 
-<span class="sd">	def backend_handler(self, fd, _ev):</span>
+<span class="sd">	def _backend_handler(self, fd, _ev):</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 <span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 <span class="sd">		msg = fd.recv_multipart()</span>
-<span class="sd">		new_msg = self.backend_process_msg(msg)</span>
+<span class="sd">		new_msg = self._backend_process_msg(msg)</span>
 <span class="sd">		if new_msg:</span>
 <span class="sd">			#print(&quot;bc send&quot;, new_msg)</span>
 <span class="sd">			self.frontend.send_multipart(new_msg)</span>
@@ -144,7 +144,7 @@
 
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="k">class</span> <span class="nc">Proxy</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
-<div class="viewcode-block" id="Proxy"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy">[docs]</a>	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ft_conn_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ft_bind_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ft_type</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">DEALER</span><span class="p">,</span> <span class="n">bc_bind_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bc_conn_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bc_type</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">DEALER</span><span class="p">):</span>
+<div class="viewcode-block" id="Proxy"><a class="viewcode-back" href="../../zerobot.proxy.html#zerobot.proxy.Proxy">[docs]</a>	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ft_conn_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ft_bind_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ft_type</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">DEALER</span><span class="p">,</span> <span class="n">bc_bind_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bc_conn_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bc_type</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">DEALER</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Interface de base pour les device avec entrée/sortie.</span>
 <span class="sd">		Il est possible de choisir le type des sockets ainsi que le type de connection (connect/bind).</span>
@@ -200,11 +200,11 @@
 
 
 	<span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<div class="viewcode-block" id="Proxy.stop"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.stop">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+<div class="viewcode-block" id="Proxy.stop"><a class="viewcode-back" href="../../zerobot.proxy.html#zerobot.proxy.Proxy.stop">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 		<span class="nb">super</span><span class="p">(</span><span class="n">Proxy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 	
 	<span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></div>
-<div class="viewcode-block" id="Proxy.start"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.start">[docs]</a>		<span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="p">:</span>
+<div class="viewcode-block" id="Proxy.start"><a class="viewcode-back" href="../../zerobot.proxy.html#zerobot.proxy.Proxy.start">[docs]</a>		<span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="p">:</span>
 			<span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">True</span><span class="p">,))</span>
 			<span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 			<span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -221,52 +221,52 @@
 				
 				<span class="k">if</span> <span class="n">frontend</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
 					<span class="c">#msg = frontend.recv_multipart()</span>
-					<span class="c">#new_msg = self.frontend_process_msg(msg)</span>
+					<span class="c">#new_msg = self._frontend_process_msg(msg)</span>
 					<span class="c">#self.backend.send_multipart(new_msg)</span>
-					<span class="bp">self</span><span class="o">.</span><span class="n">frontend_handler</span><span class="p">(</span><span class="n">frontend</span><span class="p">,</span> <span class="n">items</span><span class="p">[</span><span class="n">frontend</span><span class="p">])</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_frontend_handler</span><span class="p">(</span><span class="n">frontend</span><span class="p">,</span> <span class="n">items</span><span class="p">[</span><span class="n">frontend</span><span class="p">])</span>
 				<span class="k">if</span> <span class="n">backend</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
 					<span class="c">#msg = backend.recv_multipart()</span>
-					<span class="c">#new_msg = self.backend_process_msg(msg)</span>
+					<span class="c">#new_msg = self._backend_process_msg(msg)</span>
 					<span class="c">#self.frontend.send_multipart(new_msg)</span>
-					<span class="bp">self</span><span class="o">.</span><span class="n">backend_handler</span><span class="p">(</span><span class="n">backend</span><span class="p">,</span> <span class="n">items</span><span class="p">[</span><span class="n">backend</span><span class="p">])</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_backend_handler</span><span class="p">(</span><span class="n">backend</span><span class="p">,</span> <span class="n">items</span><span class="p">[</span><span class="n">backend</span><span class="p">])</span>
 				
 	
-	<span class="k">def</span> <span class="nf">frontend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
-<div class="viewcode-block" id="Proxy.frontend_process_msg"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.frontend_process_msg">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="nf">_frontend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
+		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
 <span class="sd">		Cette fonctione est appellée lorsque le socket frontend reçoit un message.</span>
 <span class="sd">		Le résultat de la fonction est envoyé à la socket backend.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">return</span> <span class="n">msg</span>
 		
-	<span class="k">def</span> <span class="nf">frontend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">_ev</span><span class="p">):</span></div>
-<div class="viewcode-block" id="Proxy.frontend_handler"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.frontend_handler">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="nf">_frontend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">_ev</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Fonction pouvant être surchargée pour changer le comportement du proxy.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">msg</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
-		<span class="n">new_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frontend_process_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+		<span class="n">new_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frontend_process_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">new_msg</span><span class="p">:</span>
 			<span class="c">#print(&quot;ft send&quot;, new_msg)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">new_msg</span><span class="p">)</span>
 
-	<span class="k">def</span> <span class="nf">backend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
-<div class="viewcode-block" id="Proxy.backend_process_msg"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.backend_process_msg">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="nf">_backend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
 <span class="sd">		Cette fonctione est appellée lorsque le socket backend reçoit un message.</span>
 <span class="sd">		Le résultat de la fonction est envoyé à la socket frontend.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">return</span> <span class="n">msg</span>
 
-	<span class="k">def</span> <span class="nf">backend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">_ev</span><span class="p">):</span></div>
-<div class="viewcode-block" id="Proxy.backend_handler"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.backend_handler">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="nf">_backend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">_ev</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">msg</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
-		<span class="n">new_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend_process_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+		<span class="n">new_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_process_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">new_msg</span><span class="p">:</span>
 			<span class="c">#print(&quot;bc send&quot;, new_msg)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">frontend</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">new_msg</span><span class="p">)</span>
-</pre></div></div></div>
+</pre></div></div>
 
           </div>
         </div>

@@ -1,0 +1,239 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>service Module &mdash; Zerobot 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Zerobot 0.0.1 documentation" href="index.html" />
+    <link rel="up" title="zerobot Package" href="zerobot.html" />
+    <link rel="next" title="server Module" href="zerobot.server.html" />
+    <link rel="prev" title="client Module" href="zerobot.client.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zerobot.server.html" title="server Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="zerobot.client.html" title="client Module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="zerobot.html" accesskey="U">zerobot Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-zerobot.service">
+<span id="service-module"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">service</span></tt> Module<a class="headerlink" href="#module-zerobot.service" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="zerobot.service.AsyncService">
+<em class="property">class </em><tt class="descclassname">zerobot.service.</tt><tt class="descname">AsyncService</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>exposed_obj</em>, <em>ctx=None</em>, <em>init_workers=5</em>, <em>max_workers=50</em>, <em>min_workers=None</em>, <em>dynamic_workers=False</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="zerobot.proxy.html#zerobot.proxy.Proxy" title="zerobot.proxy.Proxy"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.proxy.Proxy</span></tt></a></p>
+<p>Permet d&#8217;exposer les méthodes d&#8217;une classe à distance. Permet en plus
+de lancer plusieurs méthodes bloquantes de la classe simultanément.
+Des workers sont utilisés, chaque worker exécute une requête&lt;=&gt;méthode de la class exposée.</p>
+<p><em>identity</em> string representant le nom unique du client</p>
+<p><em>conn_addr</em> l&#8217;adresse du backend du serveur</p>
+<p><em>exposed_obj</em> une instance de l&#8217;objet à exposer</p>
+<p><em>ctx</em> zmq context</p>
+<p><em>init_workers</em> le nombre initial de workers &lt;=&gt; requêtes simultanées possibles</p>
+<p><em>max_workers</em> nombre maximum de requêtes simultanées</p>
+<p><em>min_workers</em> si non précisé est égale à init_workers</p>
+<p><em>dynamic_workers</em> autorisé l&#8217;ajout/suppression de workers automatiquement</p>
+<dl class="method">
+<dt id="zerobot.service.AsyncService.add_handler">
+<tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="headerlink" href="#zerobot.service.AsyncService.add_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ajouter un handler pour l&#8217;ioloop.</p>
+<p><em>fd</em> le file descriptor a écouter</p>
+<p><em>cb</em> le callback a appeller en cas d&#8217;event</p>
+<p><em>cb</em> le type d&#8217;event, zmq style</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.add_worker">
+<tt class="descname">add_worker</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.add_worker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.add_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ajoute un worker au client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.grow">
+<tt class="descname">grow</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.grow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.grow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Si le client est en galere, des workers seront ajoutés, sinon
+ne fait rien.</p>
+<p>Fonction appellée en interne lorsque <em>dynamic_workers</em> veut True.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.start">
+<tt class="descname">start</tt><big>(</big><em>block=False</em><big>)</big><a class="headerlink" href="#zerobot.service.AsyncService.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#zerobot.service.AsyncService.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.ungrow">
+<tt class="descname">ungrow</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.ungrow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.ungrow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Si le client n&#8217;est pas très occupé, des workers seront retirés,
+sinon ne fait rien.</p>
+<p>Fonction appellée en interne lorsque <em>dynamic_workers</em> veut True.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.service.Service">
+<em class="property">class </em><tt class="descclassname">zerobot.service.</tt><tt class="descname">Service</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>exposed_obj</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#Service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.Service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="zerobot.core.html#zerobot.core.BaseClient" title="zerobot.core.BaseClient"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.BaseClient</span></tt></a></p>
+<p>Permet d&#8217;exposer les méthodes d&#8217;une classe à distance. Les requêtes sont
+traitées séquentiellement, pour un traitement de requêtes en parallèle
+voir <a class="reference internal" href="#zerobot.service.AsyncService" title="zerobot.service.AsyncService"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.service.AsyncService</span></tt></a>.</p>
+<p><em>identity</em> string representant le nom unique du client</p>
+<p><em>conn_addr</em> l&#8217;adresse du backend du serveur</p>
+<p><em>exposed_obj</em> une instance de l&#8217;objet à exposer</p>
+<p><em>ctx</em> zmq context</p>
+<dl class="method">
+<dt id="zerobot.service.Service.add_handler">
+<tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="headerlink" href="#zerobot.service.Service.add_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ajouter un handler pour l&#8217;ioloop.</p>
+<p><em>fd</em> le file descriptor a écouter</p>
+<p><em>cb</em> le callback a appeller en cas d&#8217;event</p>
+<p><em>cb</em> le type d&#8217;event, zmq style</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.Service.close">
+<tt class="descname">close</tt><big>(</big><em>all_fds=False</em><big>)</big><a class="headerlink" href="#zerobot.service.Service.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.Service.help">
+<tt class="descname">help</tt><big>(</big><em>f=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#Service.help"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.Service.help" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renvoie l&#8217;help pour le client ou pour la fonction <em>f</em> si précisée.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.Service.send">
+<tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.service.Service.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Envoyer un message via la socket. zmq style.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.Service.send_multipart">
+<tt class="descname">send_multipart</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.service.Service.send_multipart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Envoyer un message en plusieurs parties via la socket. zmq style.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.Service.start">
+<tt class="descname">start</tt><big>(</big><em>block=True</em><big>)</big><a class="headerlink" href="#zerobot.service.Service.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.Service.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#zerobot.service.Service.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="zerobot.client.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">client</span></tt> Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zerobot.server.html"
+                        title="next chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">server</span></tt> Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/zerobot.service.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zerobot.server.html" title="server Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="zerobot.client.html" title="client Module"
+             >previous</a> |</li>
+        <li><a href="index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="zerobot.html" >zerobot Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas Recouvreux.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

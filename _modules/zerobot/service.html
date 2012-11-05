@@ -58,10 +58,19 @@
 
 <span class="c">#signal.signal(signal.SIGINT, signal_handler)</span>
 <span class="k">class</span> <span class="nc">Service</span><span class="p">(</span><span class="n">BaseClient</span><span class="p">):</span>
-<div class="viewcode-block" id="Service"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.Service">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Service"><a class="viewcode-back" href="../../zerobot.service.html#zerobot.service.Service">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Permet d&#39;exposer les méthodes d&#39;une classe à distance. Les requêtes sont</span>
 <span class="sd">	traitées séquentiellement, pour un traitement de requêtes en parallèle</span>
-<span class="sd">	voir la class AsyncService.</span>
+<span class="sd">	voir :class:`zerobot.service.AsyncService`.</span>
+<span class="sd">	</span>
+<span class="sd">	*identity* string representant le nom unique du client</span>
+<span class="sd">	</span>
+<span class="sd">	*conn_addr* l&#39;adresse du backend du serveur</span>
+<span class="sd">	</span>
+<span class="sd">	*exposed_obj* une instance de l&#39;objet à exposer</span>
+<span class="sd">	</span>
+<span class="sd">	*ctx* zmq context</span>
+<span class="sd">	</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">exposed_obj</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 		<span class="nb">super</span><span class="p">(</span><span class="n">Service</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
@@ -114,7 +123,10 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">([</span><span class="n">remote_id</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">pack</span><span class="p">()])</span>
 
 	<span class="k">def</span> <span class="nf">help</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-<div class="viewcode-block" id="Service.help"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.Service.help">[docs]</a>		<span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="p">:</span>
+<div class="viewcode-block" id="Service.help"><a class="viewcode-back" href="../../zerobot.service.html#zerobot.service.Service.help">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Renvoie l&#39;help pour le client ou pour la fonction *f* si précisée.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="p">:</span>
 			<span class="c"># aide globale</span>
 			<span class="k">return</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">)</span>
 		<span class="k">else</span><span class="p">:</span>
@@ -131,23 +143,29 @@
 		
 
 <span class="k">class</span> <span class="nc">AsyncService</span><span class="p">(</span><span class="n">Proxy</span><span class="p">):</span></div>
-<div class="viewcode-block" id="AsyncService"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AsyncService"><a class="viewcode-back" href="../../zerobot.service.html#zerobot.service.AsyncService">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Permet d&#39;exposer les méthodes d&#39;une classe à distance. Permet en plus</span>
 <span class="sd">	de lancer plusieurs méthodes bloquantes de la classe simultanément.</span>
 <span class="sd">	Des workers sont utilisés, chaque worker exécute une requête&lt;=&gt;méthode de la class exposée.</span>
+
+<span class="sd">	*identity* string representant le nom unique du client</span>
+<span class="sd">	</span>
+<span class="sd">	*conn_addr* l&#39;adresse du backend du serveur</span>
+<span class="sd">	</span>
+<span class="sd">	*exposed_obj* une instance de l&#39;objet à exposer</span>
+<span class="sd">	</span>
+<span class="sd">	*ctx* zmq context</span>
+<span class="sd">	</span>
+<span class="sd">	*init_workers* le nombre initial de workers &lt;=&gt; requêtes simultanées possibles</span>
+<span class="sd">	</span>
+<span class="sd">	*max_workers* nombre maximum de requêtes simultanées</span>
+<span class="sd">	</span>
+<span class="sd">	*min_workers* si non précisé est égale à init_workers</span>
+<span class="sd">	</span>
+<span class="sd">	*dynamic_workers* autorisé l&#39;ajout/suppression de workers automatiquement</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">exposed_obj</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
 			<span class="n">init_workers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">min_workers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dynamic_workers</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-		<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		@param {str} identity nom unique du client</span>
-<span class="sd">		@param {str} conn_addr l&#39;adresse du backend du serveur</span>
-<span class="sd">		@param {Object} une instance de l&#39;objet à exposer</span>
-<span class="sd">		@param {zmq.Context} zmq context</span>
-<span class="sd">		@param {int|5} init_workers le nombre initial de workers &lt;=&gt; requêtes simultanées possibles</span>
-<span class="sd">		@param {int|50} max_workers nombre maximum de requêtes simultanées</span>
-<span class="sd">		@param {int} min_workers si non précisé est égale à init_workers</span>
-<span class="sd">		@param {bool|False} dynamic_workers autorisé l&#39;ajout/suppression de workers automatiquement</span>
-<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="c"># sauvegarde des adresses</span>
 		<span class="nb">super</span><span class="p">(</span><span class="n">AsyncService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
 			<span class="n">identity</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span>
@@ -168,17 +186,22 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">add_worker</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_timeout_can_reduce_workers</span> <span class="o">=</span> <span class="mi">0</span>
 
-	<span class="k">def</span> <span class="nf">frontend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">ev</span><span class="p">):</span>
-<div class="viewcode-block" id="AsyncService.frontend_handler"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.frontend_handler">[docs]</a>		<span class="c"># poll on frontend only if workers are available</span>
+	<span class="k">def</span> <span class="nf">_frontend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">ev</span><span class="p">):</span>
+		<span class="c"># poll on frontend only if workers are available</span>
 		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-			<span class="nb">super</span><span class="p">(</span><span class="n">AsyncService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">frontend_handler</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">ev</span><span class="p">)</span>
+			<span class="nb">super</span><span class="p">(</span><span class="n">AsyncService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_frontend_handler</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">ev</span><span class="p">)</span>
 			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_workers</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">ungrow</span><span class="p">()</span>
 		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_workers</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">grow</span><span class="p">()</span>
 	
-	<span class="k">def</span> <span class="nf">grow</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="AsyncService.grow"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.grow">[docs]</a>		<span class="c"># ajouter des workers si on galère trop</span>
+	<span class="k">def</span> <span class="nf">grow</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="AsyncService.grow"><a class="viewcode-back" href="../../zerobot.service.html#zerobot.service.AsyncService.grow">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Si le client est en galere, des workers seront ajoutés, sinon</span>
+<span class="sd">		ne fait rien.</span>
+
+<span class="sd">		Fonction appellée en interne lorsque *dynamic_workers* veut True.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">n_workers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">n_workers</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">:</span>
 			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_workers</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">n_workers</span><span class="p">)):</span>
@@ -187,7 +210,13 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> grows to </span><span class="si">%s</span><span class="s"> workers&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">))</span>
 
 	<span class="k">def</span> <span class="nf">ungrow</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="AsyncService.ungrow"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.ungrow">[docs]</a>		<span class="c"># retirer des workers si on en a trop</span>
+<div class="viewcode-block" id="AsyncService.ungrow"><a class="viewcode-back" href="../../zerobot.service.html#zerobot.service.AsyncService.ungrow">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Si le client n&#39;est pas très occupé, des workers seront retirés,</span>
+<span class="sd">		sinon ne fait rien.</span>
+<span class="sd">		</span>
+<span class="sd">		Fonction appellée en interne lorsque *dynamic_workers* veut True.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># retirer des workers si on en a trop</span>
 		<span class="n">n_free_workers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="p">)</span>
 		<span class="n">n_workers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">n_workers</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_workers</span> <span class="ow">and</span> <span class="n">n_free_workers</span> <span class="o">&gt;</span> <span class="n">n_workers</span><span class="o">//</span><span class="mi">2</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">&gt;</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout_can_reduce_workers</span><span class="p">:</span>
@@ -201,7 +230,7 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">_timeout_can_reduce_workers</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">+</span><span class="mi">10</span>
 
 	<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="AsyncService.close"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.close">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;close event received&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="AsyncService.close"><a class="viewcode-back" href="../../zerobot.service.html#zerobot.service.AsyncService.close">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;close event received&quot;</span><span class="p">)</span>
 		<span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;close </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">worker</span><span class="p">)</span>
 			<span class="n">worker</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -209,27 +238,28 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;closed&quot;</span><span class="p">)</span>
 	
 	<span class="k">def</span> <span class="nf">add_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="AsyncService.add_worker"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.add_worker">[docs]</a>		<span class="n">worker_id</span> <span class="o">=</span> <span class="s">&quot;Worker-</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid1</span><span class="p">())</span>
+<div class="viewcode-block" id="AsyncService.add_worker"><a class="viewcode-back" href="../../zerobot.service.html#zerobot.service.AsyncService.add_worker">[docs]</a>		<span class="sd">&quot;&quot;&quot; Ajoute un worker au client. &quot;&quot;&quot;</span>
+		<span class="n">worker_id</span> <span class="o">=</span> <span class="s">&quot;Worker-</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid1</span><span class="p">())</span>
 		<span class="n">worker</span> <span class="o">=</span> <span class="n">Service</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bc_addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">)</span>
 		<span class="c"># démarage en mode non bloquant pour qu&#39;ils soient dans des threads</span>
 		<span class="n">worker</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">worker</span>
 
-	<span class="k">def</span> <span class="nf">backend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
-<div class="viewcode-block" id="AsyncService.backend_process_msg"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.backend_process_msg">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;backend recv </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+	<span class="k">def</span> <span class="nf">_backend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;backend recv </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 		<span class="n">worker_id</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 		<span class="n">worker_id</span> <span class="o">=</span> <span class="n">worker_id</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">msg</span>
 			
-	<span class="k">def</span> <span class="nf">frontend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
-<div class="viewcode-block" id="AsyncService.frontend_process_msg"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.frontend_process_msg">[docs]</a>		<span class="c">#print(&#39;Service %s received: %s&#39; % (self.identity, msg))</span>
+	<span class="k">def</span> <span class="nf">_frontend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+		<span class="c">#print(&#39;Service %s received: %s&#39; % (self.identity, msg))</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;frontend recv </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 		<span class="n">worker_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 		<span class="k">return</span> <span class="p">[</span><span class="n">worker_id</span><span class="o">.</span><span class="n">encode</span><span class="p">()]</span><span class="o">+</span><span class="n">msg</span>
 
-	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="s">&quot;AsyncService(</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,..)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ft_addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">)</span>
 </pre></div></div>
 

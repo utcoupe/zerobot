@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Zerobot 0.0.1 documentation" href="index.html" />
     <link rel="up" title="zerobot Package" href="zerobot.html" />
-    <link rel="prev" title="zerobot Package" href="zerobot.html" /> 
+    <link rel="prev" title="proxy Module" href="zerobot.proxy.html" /> 
   </head>
   <body>
     <div class="related">
@@ -40,7 +40,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="zerobot.html" title="zerobot Package"
+          <a href="zerobot.proxy.html" title="proxy Module"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
           <li><a href="zerobot.html" accesskey="U">zerobot Package</a> &raquo;</li> 
@@ -62,11 +62,15 @@
 <dl class="class">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter">
 <em class="property">class </em><tt class="descclassname">zerobot.ioadapters.arduino.</tt><tt class="descname">ArduinoAdapter</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>port</em>, <em>functions={}</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapters/arduino.html#ArduinoAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="zerobot.html#zerobot.ioadapter.IOAdapter" title="zerobot.ioadapter.IOAdapter"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.ioadapter.IOAdapter</span></tt></a></p>
+<dd><p>Bases: <a class="reference internal" href="zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter" title="zerobot.ioadapter.IOAdapter"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.ioadapter.IOAdapter</span></tt></a></p>
 <dl class="method">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter.add_handler">
 <tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.add_handler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Ajouter un handler pour l&#8217;ioloop.</p>
+<p><em>fd</em> le file descriptor a écouter</p>
+<p><em>cb</em> le callback a appeller en cas d&#8217;event</p>
+<p><em>cb</em> le type d&#8217;event, zmq style</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter.close">
@@ -102,12 +106,14 @@
 <dl class="method">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter.send">
 <tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.send" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Envoyer un message via la socket. zmq style.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter.send_multipart">
 <tt class="descname">send_multipart</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.send_multipart" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Envoyer un message en plusieurs parties via la socket. zmq style.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter.start">
@@ -166,8 +172,8 @@
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="zerobot.html"
-                        title="previous chapter">zerobot Package</a></p>
+  <p class="topless"><a href="zerobot.proxy.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">proxy</span></tt> Module</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/zerobot.ioadapters.txt"
@@ -200,7 +206,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="zerobot.html" title="zerobot Package"
+          <a href="zerobot.proxy.html" title="proxy Module"
              >previous</a> |</li>
         <li><a href="index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
           <li><a href="zerobot.html" >zerobot Package</a> &raquo;</li> 

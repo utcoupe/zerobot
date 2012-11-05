@@ -53,7 +53,7 @@
 <span class="kn">import</span> <span class="nn">subprocess</span>
 
 <span class="k">class</span> <span class="nc">IOAdapter</span><span class="p">(</span><span class="n">BaseClient</span><span class="p">):</span>
-<div class="viewcode-block" id="IOAdapter"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.IOAdapter">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="IOAdapter"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Permet de faire le pont entre quelque chose derrière une interface io classique</span>
 <span class="sd">	par exemple subprocess.stdin et subprocess.stdout, et le monde zmq.</span>
 <span class="sd">	</span>
@@ -65,31 +65,31 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">t_read_loop</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 
 	<span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-<div class="viewcode-block" id="IOAdapter.start"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.IOAdapter.start">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">t_read_loop</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<div class="viewcode-block" id="IOAdapter.start"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter.start">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">t_read_loop</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 		<span class="nb">super</span><span class="p">(</span><span class="n">IOAdapter</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
 
 	<span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="IOAdapter.stop"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.IOAdapter.stop">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+<div class="viewcode-block" id="IOAdapter.stop"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter.stop">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 		<span class="nb">super</span><span class="p">(</span><span class="n">IOAdapter</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 	
 	<span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="IOAdapter.read"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.IOAdapter.read">[docs]</a>		<span class="sd">&quot;&quot;&quot; Lecture de l&#39;io &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="IOAdapter.read"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter.read">[docs]</a>		<span class="sd">&quot;&quot;&quot; Lecture de l&#39;io &quot;&quot;&quot;</span>
 		<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;IOAdapter.read must be override&quot;</span><span class="p">)</span>
 
 	<span class="k">def</span> <span class="nf">process_sock_to_io</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
-<div class="viewcode-block" id="IOAdapter.process_sock_to_io"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.IOAdapter.process_sock_to_io">[docs]</a>		<span class="sd">&quot;&quot;&quot; Traitement du message venant de l&#39;io vers le socket &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="IOAdapter.process_sock_to_io"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter.process_sock_to_io">[docs]</a>		<span class="sd">&quot;&quot;&quot; Traitement du message venant de l&#39;io vers le socket &quot;&quot;&quot;</span>
 		<span class="k">return</span> <span class="n">msg</span>
 
 	<span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
-<div class="viewcode-block" id="IOAdapter.write"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.IOAdapter.write">[docs]</a>		<span class="sd">&quot;&quot;&quot; Écriture de l&#39;io &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="IOAdapter.write"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter.write">[docs]</a>		<span class="sd">&quot;&quot;&quot; Écriture de l&#39;io &quot;&quot;&quot;</span>
 		<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;IOAdapter.write must be override&quot;</span><span class="p">)</span>
 
 	<span class="k">def</span> <span class="nf">process_io_to_sock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
-<div class="viewcode-block" id="IOAdapter.process_io_to_sock"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.IOAdapter.process_io_to_sock">[docs]</a>		<span class="sd">&quot;&quot;&quot; Traitement du message venant du socket vers l&#39;io &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="IOAdapter.process_io_to_sock"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter.process_io_to_sock">[docs]</a>		<span class="sd">&quot;&quot;&quot; Traitement du message venant du socket vers l&#39;io &quot;&quot;&quot;</span>
 		<span class="k">return</span> <span class="n">msg</span>
 	
 	<span class="k">def</span> <span class="nf">read_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="IOAdapter.read_loop"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.IOAdapter.read_loop">[docs]</a>		<span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+<div class="viewcode-block" id="IOAdapter.read_loop"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.IOAdapter.read_loop">[docs]</a>		<span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
 			<span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 			<span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_io_to_sock</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 			<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
@@ -104,16 +104,16 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 <span class="k">class</span> <span class="nc">SubProcessAdapter</span><span class="p">(</span><span class="n">IOAdapter</span><span class="p">):</span></div>
-<div class="viewcode-block" id="SubProcessAdapter"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.SubProcessAdapter">[docs]</a>	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">popen_args</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SubProcessAdapter"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.SubProcessAdapter">[docs]</a>	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">popen_args</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 		<span class="nb">super</span><span class="p">(</span><span class="n">SubProcessAdapter</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">popen_args</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
 
 	<span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<div class="viewcode-block" id="SubProcessAdapter.read"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.SubProcessAdapter.read">[docs]</a>		<span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+<div class="viewcode-block" id="SubProcessAdapter.read"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.SubProcessAdapter.read">[docs]</a>		<span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
 		<span class="k">return</span> <span class="n">msg</span>
 
 	<span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
-<div class="viewcode-block" id="SubProcessAdapter.write"><a class="viewcode-back" href="../../zerobot.html#zerobot.ioadapter.SubProcessAdapter.write">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<div class="viewcode-block" id="SubProcessAdapter.write"><a class="viewcode-back" href="../../zerobot.ioadapter.html#zerobot.ioadapter.SubProcessAdapter.write">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </pre></div></div></div>
 
           </div>

@@ -1,0 +1,263 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ioadapter Module &mdash; Zerobot 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Zerobot 0.0.1 documentation" href="index.html" />
+    <link rel="up" title="zerobot Package" href="zerobot.html" />
+    <link rel="next" title="proxy Module" href="zerobot.proxy.html" />
+    <link rel="prev" title="server Module" href="zerobot.server.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zerobot.proxy.html" title="proxy Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="zerobot.server.html" title="server Module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="zerobot.html" accesskey="U">zerobot Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-zerobot.ioadapter">
+<span id="ioadapter-module"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">ioadapter</span></tt> Module<a class="headerlink" href="#module-zerobot.ioadapter" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="zerobot.ioadapter.IOAdapter">
+<em class="property">class </em><tt class="descclassname">zerobot.ioadapter.</tt><tt class="descname">IOAdapter</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="zerobot.core.html#zerobot.core.BaseClient" title="zerobot.core.BaseClient"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.BaseClient</span></tt></a></p>
+<p>Permet de faire le pont entre quelque chose derrière une interface io classique
+par exemple subprocess.stdin et subprocess.stdout, et le monde zmq.</p>
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.add_handler">
+<tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.add_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ajouter un handler pour l&#8217;ioloop.</p>
+<p><em>fd</em> le file descriptor a écouter</p>
+<p><em>cb</em> le callback a appeller en cas d&#8217;event</p>
+<p><em>cb</em> le type d&#8217;event, zmq style</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.close">
+<tt class="descname">close</tt><big>(</big><em>all_fds=False</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.process_io_to_sock">
+<tt class="descname">process_io_to_sock</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.process_io_to_sock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.process_io_to_sock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traitement du message venant du socket vers l&#8217;io</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.process_sock_to_io">
+<tt class="descname">process_sock_to_io</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.process_sock_to_io"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.process_sock_to_io" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traitement du message venant de l&#8217;io vers le socket</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.read">
+<tt class="descname">read</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lecture de l&#8217;io</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.read_loop">
+<tt class="descname">read_loop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.read_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.read_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.send">
+<tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Envoyer un message via la socket. zmq style.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.send_multipart">
+<tt class="descname">send_multipart</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.send_multipart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Envoyer un message en plusieurs parties via la socket. zmq style.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.start">
+<tt class="descname">start</tt><big>(</big><em>block=True</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.write">
+<tt class="descname">write</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Écriture de l&#8217;io</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.ioadapter.SubProcessAdapter">
+<em class="property">class </em><tt class="descclassname">zerobot.ioadapter.</tt><tt class="descname">SubProcessAdapter</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>popen_args</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#SubProcessAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.ioadapter.IOAdapter" title="zerobot.ioadapter.IOAdapter"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.ioadapter.IOAdapter</span></tt></a></p>
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.add_handler">
+<tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.add_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ajouter un handler pour l&#8217;ioloop.</p>
+<p><em>fd</em> le file descriptor a écouter</p>
+<p><em>cb</em> le callback a appeller en cas d&#8217;event</p>
+<p><em>cb</em> le type d&#8217;event, zmq style</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.close">
+<tt class="descname">close</tt><big>(</big><em>all_fds=False</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.process_io_to_sock">
+<tt class="descname">process_io_to_sock</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.process_io_to_sock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traitement du message venant du socket vers l&#8217;io</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.process_sock_to_io">
+<tt class="descname">process_sock_to_io</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.process_sock_to_io" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traitement du message venant de l&#8217;io vers le socket</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.read">
+<tt class="descname">read</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#SubProcessAdapter.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.read_loop">
+<tt class="descname">read_loop</tt><big>(</big><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.read_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.send">
+<tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Envoyer un message via la socket. zmq style.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.send_multipart">
+<tt class="descname">send_multipart</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.send_multipart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Envoyer un message en plusieurs parties via la socket. zmq style.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.start">
+<tt class="descname">start</tt><big>(</big><em>block=True</em><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.write">
+<tt class="descname">write</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#SubProcessAdapter.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="zerobot.server.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">server</span></tt> Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zerobot.proxy.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">proxy</span></tt> Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/zerobot.ioadapter.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zerobot.proxy.html" title="proxy Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="zerobot.server.html" title="server Module"
+             >previous</a> |</li>
+        <li><a href="index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="zerobot.html" >zerobot Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas Recouvreux.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

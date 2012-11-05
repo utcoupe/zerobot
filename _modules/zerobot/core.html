@@ -57,23 +57,23 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">zmq.eventloop</span> <span class="kn">import</span> <span class="n">ioloop</span>
 
-<div class="viewcode-block" id="ZeroBotException"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.ZeroBotException">[docs]</a><span class="k">class</span> <span class="nc">ZeroBotException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="ZeroBotException"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.ZeroBotException">[docs]</a><span class="k">class</span> <span class="nc">ZeroBotException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
 		<span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">])</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">tb</span> <span class="o">=</span> <span class="n">err</span><span class="p">[</span><span class="s">&#39;tb&#39;</span><span class="p">]</span>
 </div>
-<div class="viewcode-block" id="ZeroBotTimeout"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.ZeroBotTimeout">[docs]</a><span class="k">class</span> <span class="nc">ZeroBotTimeout</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="ZeroBotTimeout"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.ZeroBotTimeout">[docs]</a><span class="k">class</span> <span class="nc">ZeroBotTimeout</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 	<span class="k">pass</span>
 
 </div>
-<div class="viewcode-block" id="Request"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Request">[docs]</a><span class="k">class</span> <span class="nc">Request</span><span class="p">:</span>
+<div class="viewcode-block" id="Request"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Request">[docs]</a><span class="k">class</span> <span class="nc">Request</span><span class="p">:</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">fct</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[],</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{}):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">uid</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">fct</span> <span class="o">=</span> <span class="n">fct</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
 
-<div class="viewcode-block" id="Request.pack"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Request.pack">[docs]</a>	<span class="k">def</span> <span class="nf">pack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Request.pack"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Request.pack">[docs]</a>	<span class="k">def</span> <span class="nf">pack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="c">#print(&#39;Request.pack&#39;)</span>
 		<span class="n">msg</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="n">msg</span><span class="p">[</span><span class="s">&#39;uid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uid</span>
@@ -84,7 +84,7 @@
 		<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
 </div>
 	<span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="Request.unpack"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Request.unpack">[docs]</a>	<span class="k">def</span> <span class="nf">unpack</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+<div class="viewcode-block" id="Request.unpack"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Request.unpack">[docs]</a>	<span class="k">def</span> <span class="nf">unpack</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
 		<span class="c">#print(&#39;Request.unpack&#39;, msg)</span>
 		<span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
 		<span class="k">return</span> <span class="n">Request</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span>
@@ -95,13 +95,13 @@
 	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Response"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Response">[docs]</a><span class="k">class</span> <span class="nc">Response</span><span class="p">:</span>
+<div class="viewcode-block" id="Response"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Response">[docs]</a><span class="k">class</span> <span class="nc">Response</span><span class="p">:</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">uid</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
 
-<div class="viewcode-block" id="Response.pack"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Response.pack">[docs]</a>	<span class="k">def</span> <span class="nf">pack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Response.pack"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Response.pack">[docs]</a>	<span class="k">def</span> <span class="nf">pack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="c">#print(&#39;Response.pack&#39;)</span>
 		<span class="n">msg</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="n">msg</span><span class="p">[</span><span class="s">&#39;uid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uid</span>
@@ -110,11 +110,11 @@
 		<span class="c">#print(msg)</span>
 		<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="Response.error_is_set"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Response.error_is_set">[docs]</a>	<span class="k">def</span> <span class="nf">error_is_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Response.error_is_set"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Response.error_is_set">[docs]</a>	<span class="k">def</span> <span class="nf">error_is_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
 </div>
 	<span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="Response.unpack"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Response.unpack">[docs]</a>	<span class="k">def</span> <span class="nf">unpack</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+<div class="viewcode-block" id="Response.unpack"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Response.unpack">[docs]</a>	<span class="k">def</span> <span class="nf">unpack</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
 		<span class="c">#print(&#39;Response.unpack&#39;, msg)</span>
 		<span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
 		<span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span>
@@ -125,7 +125,7 @@
 	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="ResponseEvent"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.ResponseEvent">[docs]</a><span class="k">class</span> <span class="nc">ResponseEvent</span><span class="p">:</span>
+<div class="viewcode-block" id="ResponseEvent"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.ResponseEvent">[docs]</a><span class="k">class</span> <span class="nc">ResponseEvent</span><span class="p">:</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cb_fct</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_ev</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="bp">None</span>
@@ -136,7 +136,7 @@
 		<span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 		<span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 	
-<div class="viewcode-block" id="ResponseEvent.set"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.ResponseEvent.set">[docs]</a>	<span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="ResponseEvent.set"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.ResponseEvent.set">[docs]</a>	<span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
 		<span class="k">if</span> <span class="n">block</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span>
 			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cb_fct</span><span class="p">:</span>
@@ -145,14 +145,14 @@
 		<span class="k">else</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_nonblocking_set</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="ResponseEvent.wait"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.ResponseEvent.wait">[docs]</a>	<span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ResponseEvent.wait"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.ResponseEvent.wait">[docs]</a>	<span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_ev</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="ResponseEvent.is_set"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.ResponseEvent.is_set">[docs]</a>	<span class="k">def</span> <span class="nf">is_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ResponseEvent.is_set"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.ResponseEvent.is_set">[docs]</a>	<span class="k">def</span> <span class="nf">is_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ev</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span>
 
 </div></div>
-<div class="viewcode-block" id="Base"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base">[docs]</a><span class="k">class</span> <span class="nc">Base</span><span class="p">:</span>
+<div class="viewcode-block" id="Base"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Base">[docs]</a><span class="k">class</span> <span class="nc">Base</span><span class="p">:</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span> <span class="o">=</span> <span class="n">ioloop</span><span class="o">.</span><span class="n">IOLoop</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">ctx</span> <span class="o">=</span> <span class="n">ctx</span> <span class="ow">or</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
@@ -161,14 +161,23 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">_to_close</span> <span class="o">=</span> <span class="p">[]</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">__is_closed</span> <span class="o">=</span> <span class="bp">False</span>
 
-<div class="viewcode-block" id="Base.add_handler"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base.add_handler">[docs]</a>	<span class="k">def</span> <span class="nf">add_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+<div class="viewcode-block" id="Base.add_handler"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Base.add_handler">[docs]</a>	<span class="k">def</span> <span class="nf">add_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Ajouter un handler pour l&#39;ioloop.</span>
+
+<span class="sd">		*fd* le file descriptor a écouter</span>
+<span class="sd">		</span>
+<span class="sd">		*cb* le callback a appeller en cas d&#39;event</span>
+<span class="sd">		</span>
+<span class="sd">		*cb* le type d&#39;event, zmq style</span>
+<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">add_handler</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
 	</div>
 	<span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_closed</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 	
-<div class="viewcode-block" id="Base.start"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base.start">[docs]</a>	<span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Base.start"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Base.start">[docs]</a>	<span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_closed</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;This instance has been closed !&quot;</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> started&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -179,11 +188,11 @@
 			<span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 			<span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="Base.stop"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base.stop">[docs]</a>	<span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Base.stop"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Base.stop">[docs]</a>	<span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;stop event received&quot;</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="Base.close"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.Base.close">[docs]</a>	<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_fds</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Base.close"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.Base.close">[docs]</a>	<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_fds</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;close event received&quot;</span><span class="p">)</span>
 		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
@@ -200,7 +209,7 @@
 	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(..)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="p">)</span>
 </div>
-<div class="viewcode-block" id="BaseClient"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.BaseClient">[docs]</a><span class="k">class</span> <span class="nc">BaseClient</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseClient"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.BaseClient">[docs]</a><span class="k">class</span> <span class="nc">BaseClient</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		@param {str} identity identité du client</span>
@@ -219,17 +228,19 @@
 	<span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">ev</span><span class="p">):</span>
 		<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;BaseClient._process must be override&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="BaseClient.send_multipart"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.BaseClient.send_multipart">[docs]</a>	<span class="k">def</span> <span class="nf">send_multipart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseClient.send_multipart"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.BaseClient.send_multipart">[docs]</a>	<span class="k">def</span> <span class="nf">send_multipart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot; Envoyer un message en plusieurs parties via la socket. zmq style.&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="BaseClient.send"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.BaseClient.send">[docs]</a>	<span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseClient.send"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.BaseClient.send">[docs]</a>	<span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot; Envoyer un message via la socket. zmq style.&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </div>
 	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,..)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_addr</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="FdLoop"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.FdLoop">[docs]</a><span class="k">class</span> <span class="nc">FdLoop</span><span class="p">:</span>
+<div class="viewcode-block" id="FdLoop"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.FdLoop">[docs]</a><span class="k">class</span> <span class="nc">FdLoop</span><span class="p">:</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_fd_n_cb</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">poll</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Poller</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
@@ -242,28 +253,28 @@
 		<span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
 	<span class="nd">@property</span>
-<div class="viewcode-block" id="FdLoop.running"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.FdLoop.running">[docs]</a>	<span class="k">def</span> <span class="nf">running</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FdLoop.running"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.FdLoop.running">[docs]</a>	<span class="k">def</span> <span class="nf">running</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_start</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span>
 	</div>
-<div class="viewcode-block" id="FdLoop.start"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.FdLoop.start">[docs]</a>	<span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FdLoop.start"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.FdLoop.start">[docs]</a>	<span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_e_start</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 			<span class="k">for</span> <span class="n">fd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fd_handlers</span><span class="p">:</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">poll</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">zmq</span><span class="o">.</span><span class="n">POLLIN</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="FdLoop.stop"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.FdLoop.stop">[docs]</a>	<span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FdLoop.stop"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.FdLoop.stop">[docs]</a>	<span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_e_start</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 			<span class="k">for</span> <span class="n">fd</span><span class="p">,</span><span class="n">_cb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd_n_cb</span><span class="p">:</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">poll</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="FdLoop.exit"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.FdLoop.exit">[docs]</a>	<span class="k">def</span> <span class="nf">exit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FdLoop.exit"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.FdLoop.exit">[docs]</a>	<span class="k">def</span> <span class="nf">exit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_exit</span> <span class="o">=</span> <span class="bp">True</span>
 	</div>
-<div class="viewcode-block" id="FdLoop.loop"><a class="viewcode-back" href="../../zerobot.html#zerobot.core.FdLoop.loop">[docs]</a>	<span class="k">def</span> <span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FdLoop.loop"><a class="viewcode-back" href="../../zerobot.core.html#zerobot.core.FdLoop.loop">[docs]</a>	<span class="k">def</span> <span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exit</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_e_start</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 			<span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
