@@ -10,73 +10,28 @@ zerobot Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`client` Module
---------------------
 
-.. automodule:: zerobot.client
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
 
-:mod:`core` Module
-------------------
 
-.. automodule:: zerobot.core
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
 
-:mod:`ioadapter` Module
------------------------
 
-.. automodule:: zerobot.ioadapter
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
+Modules
+-----------
 
-:mod:`proxy` Module
--------------------
+.. toctree::
 
-.. automodule:: zerobot.proxy
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
+    zerobot.core
+    zerobot.client
+    zerobot.service
+    zerobot.server
+    zerobot.ioadapter
+    zerobot.proxy
 
-:mod:`server` Module
---------------------
-
-.. automodule:: zerobot.server
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`service` Module
----------------------
-
-.. automodule:: zerobot.service
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`version` Module
----------------------
-
-.. automodule:: zerobot.version
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
 
 Subpackages
 -----------
 
 .. toctree::
-
+    
     zerobot.ioadapters
 

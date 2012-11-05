@@ -11,7 +11,16 @@ class Service(BaseClient):
 	"""
 	Permet d'exposer les méthodes d'une classe à distance. Les requêtes sont
 	traitées séquentiellement, pour un traitement de requêtes en parallèle
-	voir la class AsyncService.
+	voir :class:`zerobot.service.AsyncService`.
+	
+	*identity* string representant le nom unique du client
+	
+	*conn_addr* l'adresse du backend du serveur
+	
+	*exposed_obj* une instance de l'objet à exposer
+	
+	*ctx* zmq context
+	
 	"""
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
 		super(Service,self).__init__(identity, conn_addr, ctx)
@@ -85,19 +94,25 @@ class AsyncService(Proxy):
 	Permet d'exposer les méthodes d'une classe à distance. Permet en plus
 	de lancer plusieurs méthodes bloquantes de la classe simultanément.
 	Des workers sont utilisés, chaque worker exécute une requête<=>méthode de la class exposée.
+
+	*identity* string representant le nom unique du client
+	
+	*conn_addr* l'adresse du backend du serveur
+	
+	*exposed_obj* une instance de l'objet à exposer
+	
+	*ctx* zmq context
+	
+	*init_workers* le nombre initial de workers <=> requêtes simultanées possibles
+	
+	*max_workers* nombre maximum de requêtes simultanées
+	
+	*min_workers* si non précisé est égale à init_workers
+	
+	*dynamic_workers* autorisé l'ajout/suppression de workers automatiquement
 	"""
 	def __init__(self, identity, conn_addr, exposed_obj, ctx=None,
 			init_workers=5, max_workers=50, min_workers=None, dynamic_workers=False):
-		"""
-		@param {str} identity nom unique du client
-		@param {str} conn_addr l'adresse du backend du serveur
-		@param {Object} une instance de l'objet à exposer
-		@param {zmq.Context} zmq context
-		@param {int|5} init_workers le nombre initial de workers <=> requêtes simultanées possibles
-		@param {int|50} max_workers nombre maximum de requêtes simultanées
-		@param {int} min_workers si non précisé est égale à init_workers
-		@param {bool|False} dynamic_workers autorisé l'ajout/suppression de workers automatiquement
-		"""
 		# sauvegarde des adresses
 		super(AsyncService, self).__init__(
 			identity, ctx,
@@ -128,7 +143,12 @@ class AsyncService(Proxy):
 			self.grow()
 	
 	def grow(self):
-		# ajouter des workers si on galère trop
+		"""
+		Si le client est en galere, des workers seront ajoutés, sinon
+		ne fait rien.
+
+		Fonction appellée en interne lorsque *dynamic_workers* veut True.
+		"""
 		n_workers = len(self._workers)
 		if n_workers != self.max_workers:
 			for i in range(n_workers, min(self.max_workers,2*n_workers)):
@@ -137,6 +157,12 @@ class AsyncService(Proxy):
 			self.logger.info("%s grows to %s workers", self.identity, len(self._workers))
 
 	def ungrow(self):
+		"""
+		Si le client n'est pas très occupé, des workers seront retirés,
+		sinon ne fait rien.
+		
+		Fonction appellée en interne lorsque *dynamic_workers* veut True.
+		"""
 		# retirer des workers si on en a trop
 		n_free_workers = len(self._free_workers)
 		n_workers = len(self._workers)
