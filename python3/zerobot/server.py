@@ -28,14 +28,14 @@ class Server(Proxy):
 		self.publisher.close()
 		super(Server,self).close()
 	
-	def frontend_process_msg(self, msg):
+	def _frontend_process_msg(self, msg):
 		#print("frontend")
 		self.publisher.send_multipart(msg)
 		id_from, id_to, msg = msg
 		#print('Frontend received %s' % ((id_from, id_to, msg),))
 		return [id_to,id_from,msg]
 
-	def backend_process_msg(self, msg):
+	def _backend_process_msg(self, msg):
 		#print("backend")
 		self.publisher.send_multipart(msg)
 		id_from, id_to, msg = msg

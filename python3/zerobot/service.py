@@ -192,14 +192,14 @@ class AsyncService(Proxy):
 		self._free_workers.append(worker_id)
 		self._workers[worker_id] = worker
 
-	def backend_process_msg(self, msg):
+	def _backend_process_msg(self, msg):
 		self.logger.debug("backend recv %s", msg)
 		worker_id, msg = msg[0], msg[1:]
 		worker_id = worker_id.decode()
 		self._free_workers.append(worker_id)
 		return msg
 			
-	def frontend_process_msg(self, msg):
+	def _frontend_process_msg(self, msg):
 		#print('Service %s received: %s' % (self.identity, msg))
 		self.logger.debug("frontend recv %s", msg)
 		worker_id = self._free_workers.pop()

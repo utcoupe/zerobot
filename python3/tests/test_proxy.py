@@ -59,10 +59,10 @@ class ProxyTestCase(_ProxyTest):
 		self.assertEqual(msg, [b"bye", b"dude"])
 
 class RadioactivProxy(Proxy):
-	def frontend_process_msg(self, msg):
+	def _frontend_process_msg(self, msg):
 		return msg.append(b"<3 nuclear <3")
 
-	def backend_process_msg(self, msg):
+	def _backend_process_msg(self, msg):
 		return msg.append(b"i'm a fool")
 
 class ModifiedProxyTestCase(_ProxyTest):

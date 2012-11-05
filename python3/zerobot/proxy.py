@@ -55,7 +55,7 @@ class Proxy(Base):
 		self.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
 		self.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
 
-	def frontend_process_msg(self, msg):
+	def _frontend_process_msg(self, msg):
 		"""
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		Cette fonctione est appellée lorsque le socket frontend reçoit un message.
@@ -68,12 +68,12 @@ class Proxy(Base):
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		"""
 		msg = fd.recv_multipart()
-		new_msg = self.frontend_process_msg(msg)
+		new_msg = self._frontend_process_msg(msg)
 		if new_msg:
 			#print("ft send", new_msg)
 			self.backend.send_multipart(new_msg)
 
-	def backend_process_msg(self, msg):
+	def _backend_process_msg(self, msg):
 		"""
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		Cette fonctione est appellée lorsque le socket backend reçoit un message.
@@ -86,7 +86,7 @@ class Proxy(Base):
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		"""
 		msg = fd.recv_multipart()
-		new_msg = self.backend_process_msg(msg)
+		new_msg = self._backend_process_msg(msg)
 		if new_msg:
 			#print("bc send", new_msg)
 			self.frontend.send_multipart(new_msg)
@@ -171,17 +171,17 @@ class Proxy(Base):
 				
 				if frontend in items:
 					#msg = frontend.recv_multipart()
-					#new_msg = self.frontend_process_msg(msg)
+					#new_msg = self._frontend_process_msg(msg)
 					#self.backend.send_multipart(new_msg)
 					self.frontend_handler(frontend, items[frontend])
 				if backend in items:
 					#msg = backend.recv_multipart()
-					#new_msg = self.backend_process_msg(msg)
+					#new_msg = self._backend_process_msg(msg)
 					#self.frontend.send_multipart(new_msg)
 					self.backend_handler(backend, items[backend])
 				
 	
-	def frontend_process_msg(self, msg):
+	def _frontend_process_msg(self, msg):
 		"""
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		Cette fonctione est appellée lorsque le socket frontend reçoit un message.
@@ -194,12 +194,12 @@ class Proxy(Base):
 		Fonction pouvant être surchargée pour changer le comportement du proxy.
 		"""
 		msg = fd.recv_multipart()
-		new_msg = self.frontend_process_msg(msg)
+		new_msg = self._frontend_process_msg(msg)
 		if new_msg:
 			#print("ft send", new_msg)
 			self.backend.send_multipart(new_msg)
 
-	def backend_process_msg(self, msg):
+	def _backend_process_msg(self, msg):
 		"""
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		Cette fonctione est appellée lorsque le socket backend reçoit un message.
@@ -212,7 +212,7 @@ class Proxy(Base):
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		"""
 		msg = fd.recv_multipart()
-		new_msg = self.backend_process_msg(msg)
+		new_msg = self._backend_process_msg(msg)
 		if new_msg:
 			#print("bc send", new_msg)
 			self.frontend.send_multipart(new_msg)
