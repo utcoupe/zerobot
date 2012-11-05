@@ -6,6 +6,7 @@ ioadapters Package
 
 .. automodule:: zerobot.ioadapters
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
@@ -14,6 +15,7 @@ ioadapters Package
 
 .. automodule:: zerobot.ioadapters.arduino
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
