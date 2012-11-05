@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zerobot.service &mdash; Zerobot 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Zerobot 0.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for zerobot.service</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">Proxy</span>
+
+<span class="kn">import</span> <span class="nn">queue</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+
+<span class="c">#signal.signal(signal.SIGINT, signal_handler)</span>
+<span class="k">class</span> <span class="nc">Service</span><span class="p">(</span><span class="n">BaseClient</span><span class="p">):</span>
+<div class="viewcode-block" id="Service"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.Service">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Permet d&#39;exposer les méthodes d&#39;une classe à distance. Les requêtes sont</span>
+<span class="sd">	traitées séquentiellement, pour un traitement de requêtes en parallèle</span>
+<span class="sd">	voir la class AsyncService.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">exposed_obj</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="nb">super</span><span class="p">(</span><span class="n">Service</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span> <span class="o">=</span> <span class="n">exposed_obj</span>
+
+	<span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">_ev</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Le message reçu est en 2 parties :</span>
+<span class="sd">		1. remote_id</span>
+<span class="sd">		2. packed request</span>
+<span class="sd">		</span>
+<span class="sd">		Une Request est un dictionnaire:</span>
+<span class="sd">		{@code</span>
+<span class="sd">			{</span>
+<span class="sd">				uid: 	{str} unique id qu&#39;il faudra renvoyer</span>
+<span class="sd">				fct:	{str} la fonction à appeller</span>
+<span class="sd">				args:	{list} les arguments</span>
+<span class="sd">				kwargs:	{dict} les arguments només</span>
+<span class="sd">			}</span>
+<span class="sd">		}</span>
+<span class="sd">		La fonction va unpack le message et la request pour extraire la fonction à appeller.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">msg</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;worker </span><span class="si">%s</span><span class="s"> recv </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+		<span class="n">remote_id</span><span class="p">,</span> <span class="n">packed_request</span> <span class="o">=</span> <span class="n">msg</span>
+		<span class="n">request</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">packed_request</span><span class="p">)</span>
+		<span class="n">err</span> <span class="o">=</span> <span class="bp">None</span>
+		<span class="n">r</span> <span class="o">=</span> <span class="bp">None</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">fct</span><span class="o">==</span><span class="s">&#39;help&#39;</span><span class="p">:</span>
+				<span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">help</span>
+			<span class="k">elif</span> <span class="n">request</span><span class="o">.</span><span class="n">fct</span><span class="o">==</span><span class="s">&#39;stop&#39;</span><span class="p">:</span>
+				<span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">f</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">fct</span><span class="p">)</span>
+				<span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">fct</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+					<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Method </span><span class="si">%s</span><span class="s"> is protected&quot;</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">fct</span><span class="p">)</span>
+			<span class="n">args</span><span class="p">,</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">kwargs</span>
+			<span class="k">if</span> <span class="n">args</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">:</span>
+				<span class="n">r</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+			<span class="k">elif</span> <span class="n">kwargs</span><span class="p">:</span>
+				<span class="n">r</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">r</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+			<span class="n">err</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="n">err</span><span class="p">[</span><span class="s">&#39;tb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+			<span class="n">err</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+		<span class="n">response</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">([</span><span class="n">remote_id</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">pack</span><span class="p">()])</span>
+
+	<span class="k">def</span> <span class="nf">help</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Service.help"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.Service.help">[docs]</a>		<span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="p">:</span>
+			<span class="c"># aide globale</span>
+			<span class="k">return</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+				<span class="n">doc</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">,</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">__doc__</span>
+				<span class="k">if</span> <span class="ow">not</span> <span class="n">doc</span><span class="p">:</span>
+					<span class="n">doc</span> <span class="o">=</span> <span class="s">&#39;No documentation available&#39;</span>
+				<span class="k">return</span> <span class="n">doc</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">)</span><span class="o">+</span><span class="s">&#39; has no method &#39;</span><span class="o">+</span><span class="n">f</span>
+	
+	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+		<span class="k">return</span> <span class="s">&quot;ServiceWorker(</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,..)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">)</span>
+		
+
+<span class="k">class</span> <span class="nc">AsyncService</span><span class="p">(</span><span class="n">Proxy</span><span class="p">):</span></div>
+<div class="viewcode-block" id="AsyncService"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService">[docs]</a>	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Permet d&#39;exposer les méthodes d&#39;une classe à distance. Permet en plus</span>
+<span class="sd">	de lancer plusieurs méthodes bloquantes de la classe simultanément.</span>
+<span class="sd">	Des workers sont utilisés, chaque worker exécute une requête&lt;=&gt;méthode de la class exposée.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">conn_addr</span><span class="p">,</span> <span class="n">exposed_obj</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+			<span class="n">init_workers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">min_workers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dynamic_workers</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		@param {str} identity nom unique du client</span>
+<span class="sd">		@param {str} conn_addr l&#39;adresse du backend du serveur</span>
+<span class="sd">		@param {Object} une instance de l&#39;objet à exposer</span>
+<span class="sd">		@param {zmq.Context} zmq context</span>
+<span class="sd">		@param {int|5} init_workers le nombre initial de workers &lt;=&gt; requêtes simultanées possibles</span>
+<span class="sd">		@param {int|50} max_workers nombre maximum de requêtes simultanées</span>
+<span class="sd">		@param {int} min_workers si non précisé est égale à init_workers</span>
+<span class="sd">		@param {bool|False} dynamic_workers autorisé l&#39;ajout/suppression de workers automatiquement</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c"># sauvegarde des adresses</span>
+		<span class="nb">super</span><span class="p">(</span><span class="n">AsyncService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
+			<span class="n">identity</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span>
+			<span class="n">ft_conn_addr</span><span class="o">=</span><span class="n">conn_addr</span><span class="p">,</span>
+			<span class="n">ft_type</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">DEALER</span><span class="p">,</span>
+			<span class="n">bc_bind_addr</span><span class="o">=</span><span class="s">&quot;inproc://workers-</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="n">identity</span><span class="p">,</span>
+			<span class="n">bc_type</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">ROUTER</span>
+		<span class="p">)</span>
+		<span class="c">#</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span> <span class="o">=</span> <span class="n">exposed_obj</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">min_workers</span> <span class="o">=</span> <span class="n">min_workers</span> <span class="ow">or</span> <span class="n">init_workers</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span> <span class="o">=</span> <span class="n">max_workers</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dynamic_workers</span> <span class="o">=</span> <span class="n">dynamic_workers</span>
+		<span class="c"># workers</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_workers</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">init_workers</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">add_worker</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_timeout_can_reduce_workers</span> <span class="o">=</span> <span class="mi">0</span>
+
+	<span class="k">def</span> <span class="nf">frontend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">ev</span><span class="p">):</span>
+<div class="viewcode-block" id="AsyncService.frontend_handler"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.frontend_handler">[docs]</a>		<span class="c"># poll on frontend only if workers are available</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="nb">super</span><span class="p">(</span><span class="n">AsyncService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">frontend_handler</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">ev</span><span class="p">)</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_workers</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">ungrow</span><span class="p">()</span>
+		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_workers</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">grow</span><span class="p">()</span>
+	
+	<span class="k">def</span> <span class="nf">grow</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+<div class="viewcode-block" id="AsyncService.grow"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.grow">[docs]</a>		<span class="c"># ajouter des workers si on galère trop</span>
+		<span class="n">n_workers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">n_workers</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">:</span>
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_workers</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">n_workers</span><span class="p">)):</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">add_worker</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_timeout_can_reduce_workers</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">+</span><span class="mi">10</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> grows to </span><span class="si">%s</span><span class="s"> workers&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">))</span>
+
+	<span class="k">def</span> <span class="nf">ungrow</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+<div class="viewcode-block" id="AsyncService.ungrow"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.ungrow">[docs]</a>		<span class="c"># retirer des workers si on en a trop</span>
+		<span class="n">n_free_workers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="p">)</span>
+		<span class="n">n_workers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">n_workers</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_workers</span> <span class="ow">and</span> <span class="n">n_free_workers</span> <span class="o">&gt;</span> <span class="n">n_workers</span><span class="o">//</span><span class="mi">2</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">&gt;</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout_can_reduce_workers</span><span class="p">:</span>
+			<span class="n">max_to_remove</span> <span class="o">=</span> <span class="n">n_workers</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">min_workers</span>
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">max_to_remove</span><span class="p">,</span> <span class="n">n_free_workers</span><span class="o">//</span><span class="mi">2</span><span class="p">)):</span>
+				<span class="n">worker_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+				<span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> ungrows </span><span class="si">%s</span><span class="s"> workers&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">))</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_timeout_can_reduce_workers</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">+</span><span class="mi">10</span>
+
+	<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+<div class="viewcode-block" id="AsyncService.close"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.close">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;close event received&quot;</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;close </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">worker</span><span class="p">)</span>
+			<span class="n">worker</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+		<span class="nb">super</span><span class="p">(</span><span class="n">AsyncService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;closed&quot;</span><span class="p">)</span>
+	
+	<span class="k">def</span> <span class="nf">add_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+<div class="viewcode-block" id="AsyncService.add_worker"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.add_worker">[docs]</a>		<span class="n">worker_id</span> <span class="o">=</span> <span class="s">&quot;Worker-</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid1</span><span class="p">())</span>
+		<span class="n">worker</span> <span class="o">=</span> <span class="n">Service</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bc_addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">)</span>
+		<span class="c"># démarage en mode non bloquant pour qu&#39;ils soient dans des threads</span>
+		<span class="n">worker</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_workers</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">worker</span>
+
+	<span class="k">def</span> <span class="nf">backend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
+<div class="viewcode-block" id="AsyncService.backend_process_msg"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.backend_process_msg">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;backend recv </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+		<span class="n">worker_id</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+		<span class="n">worker_id</span> <span class="o">=</span> <span class="n">worker_id</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">msg</span>
+			
+	<span class="k">def</span> <span class="nf">frontend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
+<div class="viewcode-block" id="AsyncService.frontend_process_msg"><a class="viewcode-back" href="../../zerobot.html#zerobot.service.AsyncService.frontend_process_msg">[docs]</a>		<span class="c">#print(&#39;Service %s received: %s&#39; % (self.identity, msg))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;frontend recv </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+		<span class="n">worker_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_free_workers</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+		<span class="k">return</span> <span class="p">[</span><span class="n">worker_id</span><span class="o">.</span><span class="n">encode</span><span class="p">()]</span><span class="o">+</span><span class="n">msg</span>
+
+	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+		<span class="k">return</span> <span class="s">&quot;AsyncService(</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,..)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ft_addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exposed_obj</span><span class="p">)</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas Recouvreux.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

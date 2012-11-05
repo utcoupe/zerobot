@@ -1,0 +1,311 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zerobot.proxy &mdash; Zerobot 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Zerobot 0.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for zerobot.proxy</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">class Proxy(Base):</span>
+<span class="sd">	def __init__(self, identity, ctx=None, *, ft_conn_addr=None, ft_bind_addr=None, ft_type=zmq.DEALER, bc_bind_addr=None, bc_conn_addr=None, bc_type=zmq.DEALER):</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		Interface de base pour les device avec entrée/sortie.</span>
+<span class="sd">		Il est possible de choisir le type des sockets ainsi que le type de connection (connect/bind).</span>
+<span class="sd">		@param {str} identity identité du proxy</span>
+<span class="sd">		@param {zmq.Context} ctx context zmq</span>
+<span class="sd">		@param {str|None} ft_conn_addr connect frontend</span>
+<span class="sd">		@param {str|None} ft_bind_addr bind frontend</span>
+<span class="sd">		@param {zmq.*|zmq.DEALER} ft_type type du socket frontend</span>
+<span class="sd">		@param {str|None} bc_conn_addr connect backend</span>
+<span class="sd">		@param {str|None} ft_bind_addr bind backend</span>
+<span class="sd">		@param {zmq.*|zmq.DEALER} bc_type type du socket backend</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		# si aucune adresse pour le socket frontend n&#39;est précisée</span>
+<span class="sd">		if not (ft_conn_addr or ft_bind_addr):</span>
+<span class="sd">			raise Exception(&quot;ft_bind_addr or ft_conn_addr must be precised&quot;)</span>
+<span class="sd">		# si les deux adresses sont précisées</span>
+<span class="sd">		if ft_conn_addr and ft_bind_addr:</span>
+<span class="sd">			raise Exception(&quot;you can&#39;t use ft_bind_addr and ft_conn_addr&quot;)</span>
+<span class="sd">		# si aucune adresse pour le socket backend n&#39;est précisée</span>
+<span class="sd">		if not (bc_conn_addr or bc_bind_addr):</span>
+<span class="sd">			raise Exception(&quot;bc_bind_addr or bc_conn_addr must be precised&quot;)</span>
+<span class="sd">		# si les deux adresses sont précisées</span>
+<span class="sd">		if bc_conn_addr and bc_bind_addr:</span>
+<span class="sd">			raise Exception(&quot;you can&#39;t use bc_bind_addr and bc_conn_addr&quot;)</span>
+<span class="sd">		# appel du constructeur parent</span>
+<span class="sd">		super(Proxy, self).__init__(ctx)</span>
+<span class="sd">		# sauvegarde de l&#39;identité</span>
+<span class="sd">		self.identity = identity</span>
+<span class="sd">		# création ds sockets</span>
+<span class="sd">		self.frontend = self.ctx.socket(ft_type)</span>
+<span class="sd">		self.frontend.setsockopt(zmq.IDENTITY, self.identity.encode())</span>
+<span class="sd">		self.backend = self.ctx.socket(bc_type)</span>
+<span class="sd">		self.backend.setsockopt(zmq.IDENTITY, self.identity.encode())</span>
+<span class="sd">		self._to_close.append(self.frontend)</span>
+<span class="sd">		self._to_close.append(self.backend)</span>
+<span class="sd">		# sauvegarde des adresses</span>
+<span class="sd">		self._ft_addr = ft_conn_addr if ft_conn_addr else ft_bind_addr</span>
+<span class="sd">		self._bc_addr = bc_bind_addr if bc_bind_addr else bc_conn_addr</span>
+<span class="sd">		# bind/connect</span>
+<span class="sd">		if ft_conn_addr:</span>
+<span class="sd">			self.frontend.connect(ft_conn_addr)</span>
+<span class="sd">		else:</span>
+<span class="sd">			self.frontend.bind(ft_bind_addr)</span>
+<span class="sd">		if bc_conn_addr:</span>
+<span class="sd">			self.backend.connect(bc_conn_addr)</span>
+<span class="sd">		else:</span>
+<span class="sd">			self.backend.bind(bc_bind_addr)</span>
+<span class="sd">		# handlers</span>
+<span class="sd">		self.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)</span>
+<span class="sd">		self.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)</span>
+
+<span class="sd">	def frontend_process_msg(self, msg):</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
+<span class="sd">		Cette fonctione est appellée lorsque le socket frontend reçoit un message.</span>
+<span class="sd">		Le résultat de la fonction est envoyé à la socket backend.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		return msg</span>
+<span class="sd">		</span>
+<span class="sd">	def frontend_handler(self, fd, _ev):</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		msg = fd.recv_multipart()</span>
+<span class="sd">		new_msg = self.frontend_process_msg(msg)</span>
+<span class="sd">		if new_msg:</span>
+<span class="sd">			#print(&quot;ft send&quot;, new_msg)</span>
+<span class="sd">			self.backend.send_multipart(new_msg)</span>
+
+<span class="sd">	def backend_process_msg(self, msg):</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
+<span class="sd">		Cette fonctione est appellée lorsque le socket backend reçoit un message.</span>
+<span class="sd">		Le résultat de la fonction est envoyé à la socket frontend.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		return msg</span>
+
+<span class="sd">	def backend_handler(self, fd, _ev):</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		msg = fd.recv_multipart()</span>
+<span class="sd">		new_msg = self.backend_process_msg(msg)</span>
+<span class="sd">		if new_msg:</span>
+<span class="sd">			#print(&quot;bc send&quot;, new_msg)</span>
+<span class="sd">			self.frontend.send_multipart(new_msg)</span>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="k">class</span> <span class="nc">Proxy</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<div class="viewcode-block" id="Proxy"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy">[docs]</a>	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ft_conn_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ft_bind_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ft_type</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">DEALER</span><span class="p">,</span> <span class="n">bc_bind_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bc_conn_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bc_type</span><span class="o">=</span><span class="n">zmq</span><span class="o">.</span><span class="n">DEALER</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Interface de base pour les device avec entrée/sortie.</span>
+<span class="sd">		Il est possible de choisir le type des sockets ainsi que le type de connection (connect/bind).</span>
+<span class="sd">		@param {str} identity identité du proxy</span>
+<span class="sd">		@param {zmq.Context} ctx context zmq</span>
+<span class="sd">		@param {str|None} ft_conn_addr connect frontend</span>
+<span class="sd">		@param {str|None} ft_bind_addr bind frontend</span>
+<span class="sd">		@param {zmq.*|zmq.DEALER} ft_type type du socket frontend</span>
+<span class="sd">		@param {str|None} bc_conn_addr connect backend</span>
+<span class="sd">		@param {str|None} ft_bind_addr bind backend</span>
+<span class="sd">		@param {zmq.*|zmq.DEALER} bc_type type du socket backend</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ctx</span> <span class="o">=</span> <span class="n">ctx</span> <span class="ow">or</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_ctx_is_mine</span> <span class="o">=</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="bp">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="o">+</span><span class="s">&#39;.&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+		<span class="c"># si aucune adresse pour le socket frontend n&#39;est précisée</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">ft_conn_addr</span> <span class="ow">or</span> <span class="n">ft_bind_addr</span><span class="p">):</span>
+			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;ft_bind_addr or ft_conn_addr must be precised&quot;</span><span class="p">)</span>
+		<span class="c"># si les deux adresses sont précisées</span>
+		<span class="k">if</span> <span class="n">ft_conn_addr</span> <span class="ow">and</span> <span class="n">ft_bind_addr</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;you can&#39;t use ft_bind_addr and ft_conn_addr&quot;</span><span class="p">)</span>
+		<span class="c"># si aucune adresse pour le socket backend n&#39;est précisée</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">bc_conn_addr</span> <span class="ow">or</span> <span class="n">bc_bind_addr</span><span class="p">):</span>
+			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;bc_bind_addr or bc_conn_addr must be precised&quot;</span><span class="p">)</span>
+		<span class="c"># si les deux adresses sont précisées</span>
+		<span class="k">if</span> <span class="n">bc_conn_addr</span> <span class="ow">and</span> <span class="n">bc_bind_addr</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;you can&#39;t use bc_bind_addr and bc_conn_addr&quot;</span><span class="p">)</span>
+		<span class="c"># appel du constructeur parent</span>
+		<span class="nb">super</span><span class="p">(</span><span class="n">Proxy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+		<span class="c"># sauvegarde de l&#39;identité</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">identity</span> <span class="o">=</span> <span class="n">identity</span>
+		<span class="c"># création ds sockets</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">frontend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">ft_type</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">frontend</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">IDENTITY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">bc_type</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">IDENTITY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_to_close</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frontend</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_to_close</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">)</span>
+		<span class="c"># sauvegarde des adresses</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_ft_addr</span> <span class="o">=</span> <span class="n">ft_conn_addr</span> <span class="k">if</span> <span class="n">ft_conn_addr</span> <span class="k">else</span> <span class="n">ft_bind_addr</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_bc_addr</span> <span class="o">=</span> <span class="n">bc_bind_addr</span> <span class="k">if</span> <span class="n">bc_bind_addr</span> <span class="k">else</span> <span class="n">bc_conn_addr</span>
+		<span class="c"># bind/connect</span>
+		<span class="k">if</span> <span class="n">ft_conn_addr</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">frontend</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">ft_conn_addr</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">frontend</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">ft_bind_addr</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">bc_conn_addr</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bc_conn_addr</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">bc_bind_addr</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+
+
+	<span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Proxy.stop"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.stop">[docs]</a>		<span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+		<span class="nb">super</span><span class="p">(</span><span class="n">Proxy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+	
+	<span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Proxy.start"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.start">[docs]</a>		<span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="p">:</span>
+			<span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">True</span><span class="p">,))</span>
+			<span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+			<span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">backend</span><span class="p">,</span><span class="n">frontend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">frontend</span>
+			<span class="n">poller</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Poller</span><span class="p">()</span>
+			<span class="n">poller</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">backend</span><span class="p">,</span> <span class="n">zmq</span><span class="o">.</span><span class="n">POLLIN</span><span class="p">)</span>
+			<span class="n">poller</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">frontend</span><span class="p">,</span> <span class="n">zmq</span><span class="o">.</span><span class="n">POLLIN</span><span class="p">)</span>
+			<span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_stop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+				<span class="k">try</span><span class="p">:</span>
+					<span class="n">items</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">poller</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mi">500</span><span class="p">))</span>
+				<span class="k">except</span><span class="p">:</span>
+					<span class="k">break</span> <span class="c"># Interrupted</span>
+				
+				<span class="k">if</span> <span class="n">frontend</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+					<span class="c">#msg = frontend.recv_multipart()</span>
+					<span class="c">#new_msg = self.frontend_process_msg(msg)</span>
+					<span class="c">#self.backend.send_multipart(new_msg)</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">frontend_handler</span><span class="p">(</span><span class="n">frontend</span><span class="p">,</span> <span class="n">items</span><span class="p">[</span><span class="n">frontend</span><span class="p">])</span>
+				<span class="k">if</span> <span class="n">backend</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+					<span class="c">#msg = backend.recv_multipart()</span>
+					<span class="c">#new_msg = self.backend_process_msg(msg)</span>
+					<span class="c">#self.frontend.send_multipart(new_msg)</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">backend_handler</span><span class="p">(</span><span class="n">backend</span><span class="p">,</span> <span class="n">items</span><span class="p">[</span><span class="n">backend</span><span class="p">])</span>
+				
+	
+	<span class="k">def</span> <span class="nf">frontend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Proxy.frontend_process_msg"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.frontend_process_msg">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
+<span class="sd">		Cette fonctione est appellée lorsque le socket frontend reçoit un message.</span>
+<span class="sd">		Le résultat de la fonction est envoyé à la socket backend.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="n">msg</span>
+		
+	<span class="k">def</span> <span class="nf">frontend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">_ev</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Proxy.frontend_handler"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.frontend_handler">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Fonction pouvant être surchargée pour changer le comportement du proxy.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">msg</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+		<span class="n">new_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frontend_process_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">new_msg</span><span class="p">:</span>
+			<span class="c">#print(&quot;ft send&quot;, new_msg)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">new_msg</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">backend_process_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Proxy.backend_process_msg"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.backend_process_msg">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
+<span class="sd">		Cette fonctione est appellée lorsque le socket backend reçoit un message.</span>
+<span class="sd">		Le résultat de la fonction est envoyé à la socket frontend.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="n">msg</span>
+
+	<span class="k">def</span> <span class="nf">backend_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">_ev</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Proxy.backend_handler"><a class="viewcode-back" href="../../zerobot.html#zerobot.proxy.Proxy.backend_handler">[docs]</a>		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Fonction pouvant être surchargée pur changer le comportement du proxy.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">msg</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+		<span class="n">new_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend_process_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">new_msg</span><span class="p">:</span>
+			<span class="c">#print(&quot;bc send&quot;, new_msg)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">frontend</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">new_msg</span><span class="p">)</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Zerobot 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas Recouvreux.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

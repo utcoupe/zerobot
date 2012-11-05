@@ -1,0 +1,578 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zerobot Package &mdash; Zerobot 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Zerobot 0.0.1 documentation" href="index.html" />
+    <link rel="next" title="ioadapters Package" href="zerobot.ioadapters.html" />
+    <link rel="prev" title="Welcome to Zerobot’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zerobot.ioadapters.html" title="ioadapters Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Zerobot’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Zerobot 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="zerobot-package">
+<h1>zerobot Package<a class="headerlink" href="#zerobot-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">zerobot</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-zerobot.__init__"></span></div>
+<div class="section" id="module-zerobot.client">
+<span id="client-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">client</span></tt> Module<a class="headerlink" href="#module-zerobot.client" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="zerobot.client.AsyncClient">
+<em class="property">class </em><tt class="descclassname">zerobot.client.</tt><tt class="descname">AsyncClient</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>remote_id</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/client.html#AsyncClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.client.AsyncClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.core.BaseClient" title="zerobot.core.BaseClient"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.BaseClient</span></tt></a></p>
+<p>Permet de faire des appels à une classe distante.</p>
+<p>Voir aussi <a class="reference internal" href="#zerobot.client.Client" title="zerobot.client.Client"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.client.Client</span></tt></a>.</p>
+<p>Il est possible de passer plusieurs arguments lors de l&#8217;appel d&#8217;une fonction distance:</p>
+<ul class="simple">
+<li>uid : id de la request</li>
+<li>block : rendre l&#8217;appel bloquand ou non</li>
+<li>timeout : (fonctionne seulement si block=True) si le service ne repond pas, une exception sera levée</li>
+<li>cb_fct : preciser un callback qui prend en parametre un <a class="reference internal" href="#zerobot.core.Response" title="zerobot.core.Response"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.Response</span></tt></a></li>
+</ul>
+<p>Par exemple:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">cb</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&quot;Une erreur est survenue : </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">response</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s">&#39;monClient&#39;</span><span class="p">,</span> <span class="s">&#39;tcp://localhost:5000&#39;</span><span class="p">,</span> <span class="s">&#39;monService&#39;</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cb</span><span class="o">=</span><span class="n">cb</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="n">cb</span><span class="o">=</span><span class="n">cb</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c"># output :</span>
+<span class="c"># 42 &lt;- result of ping</span>
+<span class="c"># 1  &lt;- result of sleep</span>
+<span class="n">client</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="c"># raise Exception</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.client.Client">
+<em class="property">class </em><tt class="descclassname">zerobot.client.</tt><tt class="descname">Client</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>remote_id</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/client.html#Client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.client.Client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.core.BaseClient" title="zerobot.core.BaseClient"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.BaseClient</span></tt></a></p>
+<p>Permet d&#8217;appeler un service:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s">&#39;monClient&#39;</span><span class="p">,</span> <span class="s">&#39;tcp://localhost:5000&#39;</span><span class="p">,</span> <span class="s">&#39;monService&#39;</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">ping</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">saymeHello</span><span class="p">()</span>
+<span class="c">#etc...</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Attention c&#8217;est classe n&#8217;est pas faite pour les appels asynchrones,
+elle n&#8217;est pas non plus threadsafe. Pour cela voir <a class="reference internal" href="#zerobot.client.AsyncClient" title="zerobot.client.AsyncClient"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.client.AsyncClient</span></tt></a>.</p>
+</div>
+<p>Il est possible de passe plusieurs keyword arguments lors de l&#8217;appel d&#8217;une fonction distance:</p>
+<ul class="simple">
+<li>uid : preciser l&#8217;id de la request</li>
+<li>timeout : sile service ne repond pas, une exception sera levée</li>
+</ul>
+<dl class="method">
+<dt id="zerobot.client.Client.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/client.html#Client.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.client.Client.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.client.Client.reset_response">
+<tt class="descname">reset_response</tt><big>(</big><em>cb_fct=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/client.html#Client.reset_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.client.Client.reset_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.client.Client.start">
+<tt class="descname">start</tt><big>(</big><em>block=False</em><big>)</big><a class="reference internal" href="_modules/zerobot/client.html#Client.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.client.Client.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-zerobot.core">
+<span id="core-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">core</span></tt> Module<a class="headerlink" href="#module-zerobot.core" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="zerobot.core.Base">
+<em class="property">class </em><tt class="descclassname">zerobot.core.</tt><tt class="descname">Base</tt><big>(</big><em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<dl class="method">
+<dt id="zerobot.core.Base.add_handler">
+<tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="headerlink" href="#zerobot.core.Base.add_handler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.Base.close">
+<tt class="descname">close</tt><big>(</big><em>all_fds=False</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Base.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Base.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.Base.start">
+<tt class="descname">start</tt><big>(</big><em>block=True</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Base.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Base.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.Base.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Base.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Base.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.core.BaseClient">
+<em class="property">class </em><tt class="descclassname">zerobot.core.</tt><tt class="descname">BaseClient</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#BaseClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.BaseClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.core.Base" title="zerobot.core.Base"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.Base</span></tt></a></p>
+<dl class="method">
+<dt id="zerobot.core.BaseClient.send">
+<tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#BaseClient.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.BaseClient.send" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.BaseClient.send_multipart">
+<tt class="descname">send_multipart</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#BaseClient.send_multipart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.BaseClient.send_multipart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.core.FdLoop">
+<em class="property">class </em><tt class="descclassname">zerobot.core.</tt><tt class="descname">FdLoop</tt><big>(</big><em>d_fd_n_cb</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#FdLoop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.FdLoop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<dl class="method">
+<dt id="zerobot.core.FdLoop.exit">
+<tt class="descname">exit</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#FdLoop.exit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.FdLoop.exit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.FdLoop.loop">
+<tt class="descname">loop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#FdLoop.loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.FdLoop.loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="zerobot.core.FdLoop.running">
+<tt class="descname">running</tt><a class="reference internal" href="_modules/zerobot/core.html#FdLoop.running"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.FdLoop.running" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.FdLoop.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#FdLoop.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.FdLoop.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.FdLoop.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#FdLoop.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.FdLoop.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.core.Request">
+<em class="property">class </em><tt class="descclassname">zerobot.core.</tt><tt class="descname">Request</tt><big>(</big><em>uid</em>, <em>fct</em>, <em>args=</em><span class="optional">[</span><span class="optional">]</span>, <em>kwargs={}</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<dl class="method">
+<dt id="zerobot.core.Request.pack">
+<tt class="descname">pack</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Request.pack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Request.pack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="zerobot.core.Request.unpack">
+<em class="property">static </em><tt class="descname">unpack</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Request.unpack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Request.unpack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.core.Response">
+<em class="property">class </em><tt class="descclassname">zerobot.core.</tt><tt class="descname">Response</tt><big>(</big><em>uid</em>, <em>data</em>, <em>error=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<dl class="method">
+<dt id="zerobot.core.Response.error_is_set">
+<tt class="descname">error_is_set</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Response.error_is_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Response.error_is_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.Response.pack">
+<tt class="descname">pack</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Response.pack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Response.pack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="zerobot.core.Response.unpack">
+<em class="property">static </em><tt class="descname">unpack</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#Response.unpack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.Response.unpack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.core.ResponseEvent">
+<em class="property">class </em><tt class="descclassname">zerobot.core.</tt><tt class="descname">ResponseEvent</tt><big>(</big><em>cb_fct=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#ResponseEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.ResponseEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<dl class="method">
+<dt id="zerobot.core.ResponseEvent.is_set">
+<tt class="descname">is_set</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#ResponseEvent.is_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.ResponseEvent.is_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.ResponseEvent.set">
+<tt class="descname">set</tt><big>(</big><em>response</em>, <em>block=False</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#ResponseEvent.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.ResponseEvent.set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.core.ResponseEvent.wait">
+<tt class="descname">wait</tt><big>(</big><em>timeout=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#ResponseEvent.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.ResponseEvent.wait" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="zerobot.core.ZeroBotException">
+<em class="property">exception </em><tt class="descclassname">zerobot.core.</tt><tt class="descname">ZeroBotException</tt><big>(</big><em>err</em><big>)</big><a class="reference internal" href="_modules/zerobot/core.html#ZeroBotException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.ZeroBotException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.Exception</span></tt></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="zerobot.core.ZeroBotTimeout">
+<em class="property">exception </em><tt class="descclassname">zerobot.core.</tt><tt class="descname">ZeroBotTimeout</tt><a class="reference internal" href="_modules/zerobot/core.html#ZeroBotTimeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.core.ZeroBotTimeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.Exception</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-zerobot.ioadapter">
+<span id="ioadapter-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ioadapter</span></tt> Module<a class="headerlink" href="#module-zerobot.ioadapter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="zerobot.ioadapter.IOAdapter">
+<em class="property">class </em><tt class="descclassname">zerobot.ioadapter.</tt><tt class="descname">IOAdapter</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.core.BaseClient" title="zerobot.core.BaseClient"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.BaseClient</span></tt></a></p>
+<p>Permet de faire le pont entre quelque chose derrière une interface io classique
+par exemple subprocess.stdin et subprocess.stdout, et le monde zmq.</p>
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.process_io_to_sock">
+<tt class="descname">process_io_to_sock</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.process_io_to_sock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.process_io_to_sock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traitement du message venant du socket vers l&#8217;io</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.process_sock_to_io">
+<tt class="descname">process_sock_to_io</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.process_sock_to_io"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.process_sock_to_io" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traitement du message venant de l&#8217;io vers le socket</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.read">
+<tt class="descname">read</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lecture de l&#8217;io</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.read_loop">
+<tt class="descname">read_loop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.read_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.read_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.start">
+<tt class="descname">start</tt><big>(</big><em>block=True</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.IOAdapter.write">
+<tt class="descname">write</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#IOAdapter.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.IOAdapter.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Écriture de l&#8217;io</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.ioadapter.SubProcessAdapter">
+<em class="property">class </em><tt class="descclassname">zerobot.ioadapter.</tt><tt class="descname">SubProcessAdapter</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>popen_args</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#SubProcessAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.ioadapter.IOAdapter" title="zerobot.ioadapter.IOAdapter"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.ioadapter.IOAdapter</span></tt></a></p>
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.read">
+<tt class="descname">read</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#SubProcessAdapter.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapter.SubProcessAdapter.write">
+<tt class="descname">write</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapter.html#SubProcessAdapter.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapter.SubProcessAdapter.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-zerobot.proxy">
+<span id="proxy-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">proxy</span></tt> Module<a class="headerlink" href="#module-zerobot.proxy" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="zerobot.proxy.Proxy">
+<em class="property">class </em><tt class="descclassname">zerobot.proxy.</tt><tt class="descname">Proxy</tt><big>(</big><em>identity</em>, <em>ctx</em>, <em>ft_conn_addr</em>, <em>ft_bind_addr</em>, <em>ft_type</em>, <em>bc_bind_addr</em>, <em>bc_conn_addr</em>, <em>bc_type=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/proxy.html#Proxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.proxy.Proxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.core.Base" title="zerobot.core.Base"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.Base</span></tt></a></p>
+<dl class="method">
+<dt id="zerobot.proxy.Proxy.backend_handler">
+<tt class="descname">backend_handler</tt><big>(</big><em>fd</em>, <em>_ev</em><big>)</big><a class="reference internal" href="_modules/zerobot/proxy.html#Proxy.backend_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.proxy.Proxy.backend_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fonction pouvant être surchargée pur changer le comportement du proxy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.proxy.Proxy.backend_process_msg">
+<tt class="descname">backend_process_msg</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/proxy.html#Proxy.backend_process_msg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.proxy.Proxy.backend_process_msg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fonction pouvant être surchargée pur changer le comportement du proxy.
+Cette fonctione est appellée lorsque le socket backend reçoit un message.
+Le résultat de la fonction est envoyé à la socket frontend.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.proxy.Proxy.frontend_handler">
+<tt class="descname">frontend_handler</tt><big>(</big><em>fd</em>, <em>_ev</em><big>)</big><a class="reference internal" href="_modules/zerobot/proxy.html#Proxy.frontend_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.proxy.Proxy.frontend_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fonction pouvant être surchargée pour changer le comportement du proxy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.proxy.Proxy.frontend_process_msg">
+<tt class="descname">frontend_process_msg</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/proxy.html#Proxy.frontend_process_msg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.proxy.Proxy.frontend_process_msg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fonction pouvant être surchargée pur changer le comportement du proxy.
+Cette fonctione est appellée lorsque le socket frontend reçoit un message.
+Le résultat de la fonction est envoyé à la socket backend.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zerobot.proxy.Proxy.start">
+<tt class="descname">start</tt><big>(</big><em>block=False</em><big>)</big><a class="reference internal" href="_modules/zerobot/proxy.html#Proxy.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.proxy.Proxy.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.proxy.Proxy.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/proxy.html#Proxy.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.proxy.Proxy.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-zerobot.server">
+<span id="server-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">server</span></tt> Module<a class="headerlink" href="#module-zerobot.server" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="zerobot.server.Server">
+<em class="property">class </em><tt class="descclassname">zerobot.server.</tt><tt class="descname">Server</tt><big>(</big><em>ft_bind_addr='tcp://*:5000'</em>, <em>bc_bind_addr='tcp://*:5001'</em>, <em>pb_bind_addr='tcp://*:5002'</em>, <em>ctx=None</em>, <em>identity='Server'</em><big>)</big><a class="reference internal" href="_modules/zerobot/server.html#Server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.server.Server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.proxy.Proxy" title="zerobot.proxy.Proxy"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.proxy.Proxy</span></tt></a></p>
+<dl class="method">
+<dt id="zerobot.server.Server.backend_process_msg">
+<tt class="descname">backend_process_msg</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/server.html#Server.backend_process_msg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.server.Server.backend_process_msg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.server.Server.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/server.html#Server.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.server.Server.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.server.Server.frontend_process_msg">
+<tt class="descname">frontend_process_msg</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/server.html#Server.frontend_process_msg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.server.Server.frontend_process_msg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.server.Server.start">
+<tt class="descname">start</tt><big>(</big><em>block=True</em><big>)</big><a class="reference internal" href="_modules/zerobot/server.html#Server.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.server.Server.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-zerobot.service">
+<span id="service-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">service</span></tt> Module<a class="headerlink" href="#module-zerobot.service" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="zerobot.service.AsyncService">
+<em class="property">class </em><tt class="descclassname">zerobot.service.</tt><tt class="descname">AsyncService</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>exposed_obj</em>, <em>ctx=None</em>, <em>init_workers=5</em>, <em>max_workers=50</em>, <em>min_workers=None</em>, <em>dynamic_workers=False</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.proxy.Proxy" title="zerobot.proxy.Proxy"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.proxy.Proxy</span></tt></a></p>
+<p>Permet d&#8217;exposer les méthodes d&#8217;une classe à distance. Permet en plus
+de lancer plusieurs méthodes bloquantes de la classe simultanément.
+Des workers sont utilisés, chaque worker exécute une requête&lt;=&gt;méthode de la class exposée.</p>
+<dl class="method">
+<dt id="zerobot.service.AsyncService.add_worker">
+<tt class="descname">add_worker</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.add_worker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.add_worker" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.backend_process_msg">
+<tt class="descname">backend_process_msg</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.backend_process_msg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.backend_process_msg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.frontend_handler">
+<tt class="descname">frontend_handler</tt><big>(</big><em>fd</em>, <em>ev</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.frontend_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.frontend_handler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.frontend_process_msg">
+<tt class="descname">frontend_process_msg</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.frontend_process_msg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.frontend_process_msg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.grow">
+<tt class="descname">grow</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.grow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.grow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.service.AsyncService.ungrow">
+<tt class="descname">ungrow</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#AsyncService.ungrow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.AsyncService.ungrow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zerobot.service.Service">
+<em class="property">class </em><tt class="descclassname">zerobot.service.</tt><tt class="descname">Service</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>exposed_obj</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#Service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.Service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#zerobot.core.BaseClient" title="zerobot.core.BaseClient"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.core.BaseClient</span></tt></a></p>
+<p>Permet d&#8217;exposer les méthodes d&#8217;une classe à distance. Les requêtes sont
+traitées séquentiellement, pour un traitement de requêtes en parallèle
+voir la class AsyncService.</p>
+<dl class="method">
+<dt id="zerobot.service.Service.help">
+<tt class="descname">help</tt><big>(</big><em>f=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/service.html#Service.help"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.service.Service.help" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-zerobot.version">
+<span id="version-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">version</span></tt> Module<a class="headerlink" href="#module-zerobot.version" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="zerobot.ioadapters.html">ioadapters Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="zerobot.ioadapters.html#id1"><tt class="docutils literal"><span class="pre">ioadapters</span></tt> Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zerobot.ioadapters.html#module-zerobot.ioadapters.arduino"><tt class="docutils literal"><span class="pre">arduino</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">zerobot Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">zerobot</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-zerobot.client"><tt class="docutils literal"><span class="pre">client</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-zerobot.core"><tt class="docutils literal"><span class="pre">core</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-zerobot.ioadapter"><tt class="docutils literal"><span class="pre">ioadapter</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-zerobot.proxy"><tt class="docutils literal"><span class="pre">proxy</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-zerobot.server"><tt class="docutils literal"><span class="pre">server</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-zerobot.service"><tt class="docutils literal"><span class="pre">service</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-zerobot.version"><tt class="docutils literal"><span class="pre">version</span></tt> Module</a></li>
+<li><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Zerobot&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zerobot.ioadapters.html"
+                        title="next chapter">ioadapters Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/zerobot.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zerobot.ioadapters.html" title="ioadapters Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Zerobot’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Zerobot 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas Recouvreux.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
