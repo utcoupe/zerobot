@@ -111,6 +111,15 @@ class Base:
 		self.__is_closed = False
 
 	def add_handler(self, fd, cb, t):
+		"""
+		Ajouter un handler pour l'ioloop.
+
+		*fd* le file descriptor a écouter
+		
+		*cb* le callback a appeller en cas d'event
+		
+		*cb* le type d'event, zmq style
+		"""
 		self.ioloop.add_handler(fd, cb, t)
 	
 	def __del__(self):
@@ -169,9 +178,11 @@ class BaseClient(Base):
 		raise Exception("BaseClient._process must be override")
 
 	def send_multipart(self, msg):
+		""" Envoyer un message en plusieurs parties via la socket. zmq style."""
 		self.socket.send_multipart(msg)
 
 	def send(self, msg):
+		""" Envoyer un message via la socket. zmq style."""
 		self.socket.send(msg)
 
 	def __repr__(self):

@@ -52,8 +52,8 @@ class Proxy(Base):
 		else:
 			self.backend.bind(bc_bind_addr)
 		# handlers
-		self.add_handler(self.frontend, self.frontend_handler, ioloop.IOLoop.READ)
-		self.add_handler(self.backend, self.backend_handler, ioloop.IOLoop.READ)
+		self.add_handler(self.frontend, self._frontend_handler, ioloop.IOLoop.READ)
+		self.add_handler(self.backend, self._backend_handler, ioloop.IOLoop.READ)
 
 	def _frontend_process_msg(self, msg):
 		"""
@@ -63,7 +63,7 @@ class Proxy(Base):
 		"""
 		return msg
 		
-	def frontend_handler(self, fd, _ev):
+	def _frontend_handler(self, fd, _ev):
 		"""
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		"""
@@ -81,7 +81,7 @@ class Proxy(Base):
 		"""
 		return msg
 
-	def backend_handler(self, fd, _ev):
+	def _backend_handler(self, fd, _ev):
 		"""
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		"""
@@ -173,12 +173,12 @@ class Proxy(Base):
 					#msg = frontend.recv_multipart()
 					#new_msg = self._frontend_process_msg(msg)
 					#self.backend.send_multipart(new_msg)
-					self.frontend_handler(frontend, items[frontend])
+					self._frontend_handler(frontend, items[frontend])
 				if backend in items:
 					#msg = backend.recv_multipart()
 					#new_msg = self._backend_process_msg(msg)
 					#self.frontend.send_multipart(new_msg)
-					self.backend_handler(backend, items[backend])
+					self._backend_handler(backend, items[backend])
 				
 	
 	def _frontend_process_msg(self, msg):
@@ -189,7 +189,7 @@ class Proxy(Base):
 		"""
 		return msg
 		
-	def frontend_handler(self, fd, _ev):
+	def _frontend_handler(self, fd, _ev):
 		"""
 		Fonction pouvant être surchargée pour changer le comportement du proxy.
 		"""
@@ -207,7 +207,7 @@ class Proxy(Base):
 		"""
 		return msg
 
-	def backend_handler(self, fd, _ev):
+	def _backend_handler(self, fd, _ev):
 		"""
 		Fonction pouvant être surchargée pur changer le comportement du proxy.
 		"""

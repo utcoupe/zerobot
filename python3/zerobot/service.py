@@ -73,6 +73,9 @@ class Service(BaseClient):
 		self.send_multipart([remote_id, response.pack()])
 
 	def help(self, f=None):
+		"""
+		Renvoie l'help pour le client ou pour la fonction *f* si précisée.
+		"""
 		if not f:
 			# aide globale
 			return dir(self.exposed_obj)
@@ -133,10 +136,10 @@ class AsyncService(Proxy):
 			self.add_worker()
 		self._timeout_can_reduce_workers = 0
 
-	def frontend_handler(self, fd, ev):
+	def _frontend_handler(self, fd, ev):
 		# poll on frontend only if workers are available
 		if len(self._free_workers) > 0:
-			super(AsyncService, self).frontend_handler(fd, ev)
+			super(AsyncService, self)._frontend_handler(fd, ev)
 			if self.dynamic_workers and len(self._free_workers) > 0:
 				self.ungrow()
 		elif self.dynamic_workers:
@@ -185,6 +188,7 @@ class AsyncService(Proxy):
 		self.logger.info("closed")
 	
 	def add_worker(self):
+		""" Ajoute un worker au client. """
 		worker_id = "Worker-%s-%s" % (self.identity, uuid.uuid1())
 		worker = Service(worker_id, self._bc_addr, self.exposed_obj, ctx=self.ctx)
 		# démarage en mode non bloquant pour qu'ils soient dans des threads
