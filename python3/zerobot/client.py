@@ -3,6 +3,18 @@ from .core import *
 
 
 class Client(BaseClient):
+	"""
+	Permet d'appeler un service::
+
+		client = Client('monClient', 'tcp://localhost:5000', 'monService')
+		client.start(False)
+		client.ping(42)
+		client.saymeHello()
+		#etc...
+
+	Attention c'est classe n'est pas faite pour les appels asynchrones,
+	alle n'est pas non plus threadsafe. Pour cela voir :class:`zerobot.client.AsyncClient`.
+	"""
 	def __init__(self, identity, conn_addr, remote_id, ctx=None):
 		super(Client, self).__init__(identity, conn_addr, ctx)
 		self.remote_id = remote_id
@@ -53,7 +65,9 @@ class Client(BaseClient):
 	
 class AsyncClient(BaseClient):
 	"""
-	Permet de faire des appels à une classe distante
+	Permet de faire des appels à une classe distante.
+
+	Voir aussi :class:`zerobot.client.Client`.
 	"""
 	def __init__(self, identity, conn_addr, remote_id, ctx=None):
 		"""

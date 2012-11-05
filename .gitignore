@@ -3,3 +3,6 @@ __pycache__/
 *.exe
 node/zmq/
 
+_build
+_static
+_templates
