@@ -6,6 +6,7 @@ zerobot Package
 
 .. automodule:: zerobot.__init__
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
@@ -14,6 +15,7 @@ zerobot Package
 
 .. automodule:: zerobot.client
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
@@ -22,6 +24,7 @@ zerobot Package
 
 .. automodule:: zerobot.core
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
@@ -30,6 +33,7 @@ zerobot Package
 
 .. automodule:: zerobot.ioadapter
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
@@ -38,6 +42,7 @@ zerobot Package
 
 .. automodule:: zerobot.proxy
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
@@ -46,6 +51,7 @@ zerobot Package
 
 .. automodule:: zerobot.server
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
@@ -54,6 +60,7 @@ zerobot Package
 
 .. automodule:: zerobot.service
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 
@@ -62,6 +69,7 @@ zerobot Package
 
 .. automodule:: zerobot.version
     :members:
+    :inherited-members:
     :undoc-members:
     :show-inheritance:
 

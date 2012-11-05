@@ -64,9 +64,25 @@
 <em class="property">class </em><tt class="descclassname">zerobot.ioadapters.arduino.</tt><tt class="descname">ArduinoAdapter</tt><big>(</big><em>identity</em>, <em>conn_addr</em>, <em>port</em>, <em>functions={}</em>, <em>ctx=None</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapters/arduino.html#ArduinoAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="zerobot.html#zerobot.ioadapter.IOAdapter" title="zerobot.ioadapter.IOAdapter"><tt class="xref py py-class docutils literal"><span class="pre">zerobot.ioadapter.IOAdapter</span></tt></a></p>
 <dl class="method">
+<dt id="zerobot.ioadapters.arduino.ArduinoAdapter.add_handler">
+<tt class="descname">add_handler</tt><big>(</big><em>fd</em>, <em>cb</em>, <em>t</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.add_handler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapters.arduino.ArduinoAdapter.close">
+<tt class="descname">close</tt><big>(</big><em>all_fds=False</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter.help">
 <tt class="descname">help</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapters/arduino.html#ArduinoAdapter.help"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.help" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapters.arduino.ArduinoAdapter.process_io_to_sock">
+<tt class="descname">process_io_to_sock</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.process_io_to_sock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traitement du message venant du socket vers l&#8217;io</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter.process_sock_to_io">
@@ -76,6 +92,31 @@
 <dl class="method">
 <dt id="zerobot.ioadapters.arduino.ArduinoAdapter.read">
 <tt class="descname">read</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/zerobot/ioadapters/arduino.html#ArduinoAdapter.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapters.arduino.ArduinoAdapter.read_loop">
+<tt class="descname">read_loop</tt><big>(</big><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.read_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapters.arduino.ArduinoAdapter.send">
+<tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.send" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapters.arduino.ArduinoAdapter.send_multipart">
+<tt class="descname">send_multipart</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.send_multipart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapters.arduino.ArduinoAdapter.start">
+<tt class="descname">start</tt><big>(</big><em>block=True</em><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zerobot.ioadapters.arduino.ArduinoAdapter.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#zerobot.ioadapters.arduino.ArduinoAdapter.stop" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
