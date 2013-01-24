@@ -22,8 +22,8 @@ class Service(BaseClient):
 	*ctx* zmq context
 	
 	"""
-	def __init__(self, identity, conn_addr, exposed_obj, ctx=None):
-		super(Service,self).__init__(identity, conn_addr, ctx)
+	def __init__(self, identity, conn_addr, exposed_obj, *, ctx=None):
+		super(Service,self).__init__(identity, conn_addr, ctx=ctx)
 		self.exposed_obj = exposed_obj
 
 	def _process(self, fd, _ev):
@@ -114,11 +114,11 @@ class AsyncService(Proxy):
 	
 	*dynamic_workers* autorisé l'ajout/suppression de workers automatiquement
 	"""
-	def __init__(self, identity, conn_addr, exposed_obj, ctx=None,
+	def __init__(self, identity, conn_addr, exposed_obj, *, ctx=None,
 			init_workers=5, max_workers=50, min_workers=None, dynamic_workers=False):
 		# sauvegarde des adresses
 		super(AsyncService, self).__init__(
-			identity, ctx,
+			identity, ctx=ctx,
 			ft_conn_addr=conn_addr,
 			ft_type=zmq.DEALER,
 			bc_bind_addr="inproc://workers-%s"%identity,

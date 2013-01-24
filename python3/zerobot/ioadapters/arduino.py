@@ -58,8 +58,8 @@ class ArduinoFunction:
 		return "{name}({params})".format(name=self.name, params=params)
 
 class ArduinoAdapter(IOAdapter):
-	def __init__(self, identity, conn_addr, port, functions={}, ctx=None):
-		super(ArduinoAdapter, self).__init__(identity, conn_addr, ctx)
+	def __init__(self, identity, conn_addr, port, functions={}, *, ctx=None):
+		super(ArduinoAdapter, self).__init__(identity, conn_addr, ctx=ctx)
 		self.serial = None # TODO
 		self.hash_uid = {} # contient la relation hash=>uuid
 		self.functions = functions

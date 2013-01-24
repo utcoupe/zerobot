@@ -8,9 +8,9 @@ class IOAdapter(BaseClient):
 	par exemple subprocess.stdin et subprocess.stdout, et le monde zmq.
 	
 	"""
-	def __init__(self, identity, conn_addr, ctx=None):
-		super(IOAdapter,self).__init__(identity, conn_addr, ctx)
+	def __init__(self, identity, conn_addr, *, ctx=None):
 		self._e_stop = threading.Event()
+		super(IOAdapter,self).__init__(identity, conn_addr, ctx=ctx)
 		self.t_read_loop = threading.Thread(target=self.read_loop, name="%s.read_loop"%self)
 		self.t_read_loop.setDaemon(True)
 
@@ -55,7 +55,7 @@ class IOAdapter(BaseClient):
 
 class SubProcessAdapter(IOAdapter):
 	def __init__(self, identity, conn_addr, popen_args, ctx=None):
-		super(SubProcessAdapter,self).__init__(identity, conn_addr, ctx)
+		super(SubProcessAdapter,self).__init__(identity, conn_addr, ctx=ctx)
 		self.p = subprocess.Popen(popen_args, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
 
 	def read(self):

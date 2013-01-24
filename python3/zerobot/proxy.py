@@ -94,7 +94,9 @@ class Proxy(Base):
 
 '''
 class Proxy(Base):
-	def __init__(self, identity, ctx=None, *, ft_conn_addr=None, ft_bind_addr=None, ft_type=zmq.DEALER, bc_bind_addr=None, bc_conn_addr=None, bc_type=zmq.DEALER):
+	def __init__(self, identity, *, ctx=None,
+			ft_conn_addr=None, ft_bind_addr=None, ft_type=zmq.DEALER,
+			bc_bind_addr=None, bc_conn_addr=None, bc_type=zmq.DEALER):
 		"""
 		Interface de base pour les device avec entrée/sortie.
 		Il est possible de choisir le type des sockets ainsi que le type de connection (connect/bind).
@@ -148,6 +150,11 @@ class Proxy(Base):
 
 		self._e_stop = threading.Event()
 
+	def create_poller(self):
+		poller = zmq.Poller()
+		poller.register(self.backend, zmq.POLLIN)
+		poller.register(self.frontend, zmq.POLLIN)
+		return poller
 
 	def stop(self):
 		self._e_stop.set()
@@ -160,9 +167,7 @@ class Proxy(Base):
 			t.start()
 		else:
 			backend,frontend = self.backend,self.frontend
-			poller = zmq.Poller()
-			poller.register(backend, zmq.POLLIN)
-			poller.register(frontend, zmq.POLLIN)
+			poller = self.create_poller()
 			while not self._e_stop.is_set():
 				try:
 					items = dict(poller.poll(500))
@@ -179,7 +184,15 @@ class Proxy(Base):
 					#new_msg = self._backend_process_msg(msg)
 					#self.frontend.send_multipart(new_msg)
 					self._backend_handler(backend, items[backend])
-				
+
+				self._process_poll_items(items)
+
+	def _process_poll_items(self, items):
+		"""
+		Fonction pouvant être surchargée pour pouvoir traiter d'autre
+		socket que backend et frontend par exemple.
+		"""
+		pass
 	
 	def _frontend_process_msg(self, msg):
 		"""

@@ -5,6 +5,7 @@ import threading
 import time
 import logging
 from zmq.eventloop import ioloop
+from collections import defaultdict
 
 class ZeroBotException(Exception):
 	def __init__(self, err):
@@ -159,24 +160,60 @@ class Base:
 		return "%s(..)" % (self.__class__.__name__, )
 
 class BaseClient(Base):
-	def __init__(self, identity, conn_addr, ctx=None):
+	def __init__(self, identity, conn_addr, ev_sub_addr=None, ev_push_addr=None, *, ctx=None):
 		"""
 		@param {str} identity identité du client
 		@param {str} conn_addr adresse sur laquelle se connecter
+		@param {str} ev_sub_addr adresse sur laquelle se connecter pour ecouter les events
 		@param {zmq.Context} zmq context
 		"""
 		super(BaseClient, self).__init__(ctx)
 		self.identity = identity
+		
 		self.conn_addr = conn_addr
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
 		self.socket.connect(conn_addr)
 		self.add_handler(self.socket, self._process, ioloop.IOLoop.READ)
 		self._to_close.append(self.socket)
+		
+		self.callbacks = defaultdict(list)
+		if ev_sub_addr:
+			self.ev_sub_addr = ev_sub_addr
+			self.ev_sub_socket = self.ctx.socket(zmq.SUB)
+			self.ev_sub_socket.connect(ev_sub_addr)
+			self.add_handler(self.ev_sub_socket, self._process_ev, ioloop.IOLoop.READ)
+			self._to_close.append(self.ev_sub_socket)
+		else:
+			self.ev_sub_addr = None
+			self.ev_sub_socket = None
 
+		if ev_push_addr:
+			self.ev_push_addr = ev_push_addr
+			self.ev_push_socket = self.ctx.socket(zmq.DEALER)
+			self.ev_push_socket.connect(ev_push_addr)
+			self._to_close.append(self.ev_push_socket)
+		else:
+			self.ev_push_addr = None
+			self.ev_push_socket = None
+			
+
+	def add_callback(self, ev_key, cb):
+		if not self.ev_sub_addr:
+			raise Exception("This client does not have event subscribing address")
+		self.callbacks[ev_key].append(cb)
+		self.ev_sub_addr.setsockopt(zmq.SUBSCRIBE, ev_key.encode())
+	
 	def _process(self, fd, ev):
 		raise Exception("BaseClient._process must be override")
 
+	def _process_ev(self, fd, _ev):
+		ev_key, id_from, msg = map(lambda x: x.decode(), fd.recv_multipart())
+		for cb in self.callbacks[ev_key]:
+			t = threading.Thread(target=cb, args=(ev_key, id_from, msg))
+			t.daemon = True
+			t.start()
+	
 	def send_multipart(self, msg):
 		""" Envoyer un message en plusieurs parties via la socket. zmq style."""
 		self.socket.send_multipart(msg)
@@ -185,6 +222,11 @@ class BaseClient(Base):
 		""" Envoyer un message via la socket. zmq style."""
 		self.socket.send(msg)
 
+	def send_event(self, key, msg):
+		if not self.ev_push_addr:
+			raise Exception("This client does not have event push address")
+		self.ev_push_socket.send_multipart([key.encode(), msg.encode()])
+	
 	def __repr__(self):
 		return "%s(%s,%s,..)" % (self.__class__.__name__, self.identity, self.conn_addr)
 

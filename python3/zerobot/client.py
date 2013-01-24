@@ -20,7 +20,7 @@ class Client(BaseClient):
 	Il est possible de passe plusieurs keyword arguments lors de l'appel d'une fonction distance:
 	
 	* uid : preciser l'id de la request
-	* timeout : sile service ne repond pas, une exception sera levée
+	* timeout : si le service ne repond pas, une exception sera levée
 	"""
 	def __init__(self, identity, conn_addr, remote_id, ctx=None):
 		super(Client, self).__init__(identity, conn_addr, ctx)
