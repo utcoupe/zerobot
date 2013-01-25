@@ -8,7 +8,7 @@ from zerobot import *
 
 #import logging; logging.basicConfig(level=0)
 
-class ServerTestCase(unittest.TestCase):
+class BaseServerTestCase:
 	PORT = 9000
 	FRONTEND_PORT	= PORT + 1
 	BACKEND_PORT	= PORT + 2
@@ -20,35 +20,63 @@ class ServerTestCase(unittest.TestCase):
 		def _process(self, fd, _ev):
 			self.msg = fd.recv_multipart()
 
-	def test_launch(self):
-		server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,
+
+	def setUp(self):
+		self.server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,
 			"tcp://*:%s"%self.LOG_PORT, "tcp://*:%s"%self.EV_PULLER, "tcp://*:%s"%self.EV_PUBLISHER)
-		server.start(False)
-		time.sleep(0.5)
-		server.close()
+		self.server.start(False)
 		time.sleep(0.1)
 
-	def test_route(self):
-		msg_content = b"coucou"
-		# lancement du serveur
-		server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,
-			"tcp://*:%s"%self.LOG_PORT, "tcp://*:%s"%self.EV_PULLER, "tcp://*:%s"%self.EV_PUBLISHER)
-		server.start(False)
-		# lancement des clients
-		client1 = self.BasicClient("Client-1", "tcp://*:%s"%self.FRONTEND_PORT)
-		client2 = self.BasicClient("Client-2", "tcp://*:%s"%self.BACKEND_PORT)
+	def tearDown(self):
+		time.sleep(0.2)
+		self.server.close()
+		del self.server
+		time.sleep(0.2)
+
+class ServerTestCase(BaseServerTestCase, unittest.TestCase):
+	
+	def test_launch(self):
+		pass
+
+class BaseServerAndClientsTestCase(BaseServerTestCase):
+
+	def setUp(self):
+		client1 = self.BasicClient("Client-1", "tcp://*:%s"%self.FRONTEND_PORT,
+						"tcp://*:%s"%self.EV_PUBLISHER)
+		client2 = self.BasicClient("Client-2", "tcp://*:%s"%self.BACKEND_PORT,
+						ev_push_addr="tcp://*:%s"%self.EV_PULLER)
 		client3 = self.BasicClient("Client-3", "tcp://*:%s"%self.BACKEND_PORT)
 		client1.start(False)
 		client2.start(False)
 		client3.start(False)
-		
-		time.sleep(0.1)
+		self.client1 = client1
+		self.client2 = client2
+		self.client3 = client3
+		super(BaseServerAndClientsTestCase, self).setUp()
+
+	def tearDown(self):
+		super(BaseServerAndClientsTestCase, self).tearDown()
+		self.client1.close()
+		self.client2.close()
+		self.client3.close()
+		del self.client1
+		del self.client2
+		del self.client3
+
+class ServerAndClientsTestCase(BaseServerAndClientsTestCase, unittest.TestCase):
+	
+	def test_route(self):
+		msg_content = b"coucou"
+		server = self.server
+		client1 = self.client1
+		client2 = self.client2
+		client3 = self.client3
 
 		# envoie d'un message
 		client1.send_multipart([client2.identity.encode(), msg_content])
 
 		# sleep
-		time.sleep(0.05)
+		time.sleep(0.1)
 
 		# vérification de la réception
 		self.assertTrue(hasattr(client2,'msg'))
@@ -60,58 +88,64 @@ class ServerTestCase(unittest.TestCase):
 		client2.send_multipart([client1.identity.encode(), msg_content])
 
 		# sleep
-		time.sleep(0.05)
+		time.sleep(0.1)
 
 		# vérification de la reception
 		self.assertTrue(hasattr(client1,'msg'))
 		self.assertEqual([client2.identity.encode(), msg_content], client1.msg)
-		
-		server.close()
-		client1.close()
-		client2.close()
-		client3.close()
-		time.sleep(0.1)
 
-	def test_event(self):
-		ev_key = b"yo"
-		msg_content = b"coucou"
-		# lancement du serveur
-		server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,
-			"tcp://*:%s"%self.LOG_PORT, "tcp://*:%s"%self.EV_PULLER, "tcp://*:%s"%self.EV_PUBLISHER)
-		server.start(False)
 
+class BaseServerEventsTestCase(BaseServerAndClientsTestCase):
+
+	def setUp(self):
 		ctx = zmq.Context()
-		client = ctx.socket(zmq.DEALER)
-		client.setsockopt(zmq.IDENTITY, b"client-test")
-		client.connect("tcp://localhost:%s"%self.EV_PULLER)
-		
 		logger = ctx.socket(zmq.SUB)
 		logger.connect("tcp://localhost:%s"%self.LOG_PORT)
 		logger.setsockopt(zmq.SUBSCRIBE, b"")
+		self.logger = logger
+		self.logger_ctx = ctx
+		super(BaseServerEventsTestCase, self).setUp()
 
-		# client testant la reception de l'event par key
-		client2 = ctx.socket(zmq.SUB)
-		client2.connect("tcp://localhost:%s"%self.EV_PUBLISHER)
-		client2.setsockopt(zmq.SUBSCRIBE, b"")
+	def tearDown(self):
+		super(BaseServerEventsTestCase, self).tearDown()
+		self.logger.close()
+		del self.logger
+		del self.logger_ctx
+
+class ServerEventsTestCase(BaseServerEventsTestCase, unittest.TestCase):
+	
+	def test_event(self):
+		ev_key = "yo"
+		ev_obj = ["coucou", "tout le monde"]
+		server = self.server
+		client1 = self.client1
+		client2 = self.client2
+		logger = self.logger
+
+		self.ev_recv = False
+		# ecoute d'un event
+		def cb(key, id_from, obj):
+			self.ev_recv = True
+			self.ev_key = key
+			self.ev_id_from = id_from
+			self.ev_obj = obj
+		client1.add_callback(ev_key, cb)
 		
 		# envoie d'un event
-		client.send_multipart([ev_key, msg_content])
+		client2.send_event(ev_key, ev_obj)
 
 		# sleep
-		time.sleep(0.05)
+		time.sleep(0.1)
 		
 		# vérification de la reception
+		self.assertEqual(self.ev_recv, True)
+		self.assertEqual(self.ev_key, ev_key)
+		self.assertEqual(self.ev_id_from, client2.identity)
+		self.assertEqual(self.ev_obj, ev_obj)
+
+		# verification logger
 		msg = logger.recv_multipart()
-		self.assertEqual([client.identity, ev_key, msg_content], msg)
-		msg = client2.recv_multipart()
-		self.assertEqual([ev_key, client.identity, msg_content], msg)
-		
-		server.close()
-		client.close()
-		client2.close()
-		logger.close()
-		del ctx
-		time.sleep(0.1)
-	
+		self.assertEqual([client2.identity.encode(), ev_key.encode(), json.dumps(ev_obj).encode()], msg)
+
 if __name__ == '__main__':
     unittest.main()

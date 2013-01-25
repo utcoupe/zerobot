@@ -165,11 +165,11 @@ class BaseClient(Base):
 		@param {str} identity identité du client
 		@param {str} conn_addr adresse sur laquelle se connecter
 		@param {str} ev_sub_addr adresse sur laquelle se connecter pour ecouter les events
+		@param {str} ev_push_addr adresse sur laquelle se connecter pour lancer les events
 		@param {zmq.Context} zmq context
 		"""
 		super(BaseClient, self).__init__(ctx)
 		self.identity = identity
-		
 		self.conn_addr = conn_addr
 		self.socket = self.ctx.socket(zmq.DEALER)
 		self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
@@ -191,6 +191,7 @@ class BaseClient(Base):
 		if ev_push_addr:
 			self.ev_push_addr = ev_push_addr
 			self.ev_push_socket = self.ctx.socket(zmq.DEALER)
+			self.ev_push_socket.setsockopt(zmq.IDENTITY, self.identity.encode())
 			self.ev_push_socket.connect(ev_push_addr)
 			self._to_close.append(self.ev_push_socket)
 		else:
@@ -202,15 +203,18 @@ class BaseClient(Base):
 		if not self.ev_sub_addr:
 			raise Exception("This client does not have event subscribing address")
 		self.callbacks[ev_key].append(cb)
-		self.ev_sub_addr.setsockopt(zmq.SUBSCRIBE, ev_key.encode())
+		self.ev_sub_socket.setsockopt(zmq.SUBSCRIBE, ev_key.encode())
 	
 	def _process(self, fd, ev):
 		raise Exception("BaseClient._process must be override")
 
 	def _process_ev(self, fd, _ev):
-		ev_key, id_from, msg = map(lambda x: x.decode(), fd.recv_multipart())
+		mmsg = fd.recv_multipart()
+		#print("recv event : %s" % mmsg)
+		ev_key, id_from, msg = map(lambda x: x.decode(), mmsg)
+		obj = json.loads(msg)
 		for cb in self.callbacks[ev_key]:
-			t = threading.Thread(target=cb, args=(ev_key, id_from, msg))
+			t = threading.Thread(target=cb, args=(ev_key, id_from, obj))
 			t.daemon = True
 			t.start()
 	
@@ -222,10 +226,13 @@ class BaseClient(Base):
 		""" Envoyer un message via la socket. zmq style."""
 		self.socket.send(msg)
 
-	def send_event(self, key, msg):
+	def _send_event(self, key, msg):
 		if not self.ev_push_addr:
 			raise Exception("This client does not have event push address")
 		self.ev_push_socket.send_multipart([key.encode(), msg.encode()])
+
+	def send_event(self, key, obj):
+		self._send_event(key, json.dumps(obj))
 	
 	def __repr__(self):
 		return "%s(%s,%s,..)" % (self.__class__.__name__, self.identity, self.conn_addr)

@@ -64,10 +64,10 @@ class Server(Proxy):
 	def _ev_puller_handler(self, fd, _ev):
 		msg = fd.recv_multipart()
 		#print("ev_puller")
+		#print('Event puller received %s' % (msg,))
 		self.publisher.send_multipart(msg)
 		id_from, key_event, msg = msg
 		self.ev_publisher.send_multipart([key_event, id_from, msg])
-		#print('Event puller received %s' % (msg,))
 	
 	def _process_poll_items(self, items):
 		"""
