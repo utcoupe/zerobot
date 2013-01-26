@@ -8,11 +8,11 @@ class IOAdapter(BaseClient):
 	par exemple subprocess.stdin et subprocess.stdout, et le monde zmq.
 	
 	"""
-	def __init__(self, identity, conn_addr, *, ctx=None):
+	def __init__(self, identity, conn_addr, **kwargs):
 		self._e_stop = threading.Event()
-		super(IOAdapter,self).__init__(identity, conn_addr, ctx=ctx)
+		super(IOAdapter,self).__init__(identity, conn_addr, **kwargs)
 		self.t_read_loop = threading.Thread(target=self.read_loop, name="%s.read_loop"%self)
-		self.t_read_loop.setDaemon(True)
+		self.t_read_loop.daemon = True
 
 	def start(self, block=True):
 		self.t_read_loop.start()
@@ -24,7 +24,7 @@ class IOAdapter(BaseClient):
 	
 	def read(self):
 		""" Lecture de l'io """
-		raise Exception("IOAdapter.read must be override")
+		raise NotImplementedError("IOAdapter.read")
 
 	def process_sock_to_io(self, msg):
 		""" Traitement du message venant de l'io vers le socket """
@@ -32,7 +32,7 @@ class IOAdapter(BaseClient):
 
 	def write(self, msg):
 		""" Écriture de l'io """
-		raise Exception("IOAdapter.write must be override")
+		raise NotImplementedError("IOAdapter.write")
 
 	def process_io_to_sock(self, msg):
 		""" Traitement du message venant du socket vers l'io """
@@ -41,11 +41,12 @@ class IOAdapter(BaseClient):
 	def read_loop(self):
 		while not self._e_stop.is_set():
 			msg = self.read()
-			msg = self.process_io_to_sock(msg)
-			if isinstance(msg,list):
-				self.send_multipart(msg)
-			elif msg:
-				self.send(msg)
+			if msg:
+				msg = self.process_io_to_sock(msg)
+				if isinstance(msg,list):
+					self.send_multipart(msg)
+				elif msg:
+					self.send(msg)
 
 	def _process(self, fd, _ev):
 		msg = fd.recv_multipart()
