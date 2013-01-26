@@ -37,7 +37,7 @@ class _ServiceTest:
 		self.socket.bind("tcp://*:%s"%self.PORT)
 		
 		# création du class exposer
-		self.abc = self.KLASS(self.classexposer_id.decode(), "tcp://localhost:%s"%self.PORT, self.Abc(), ctx=zmq.Context())
+		self.abc = self.KLASS(self.classexposer_id.decode(), "tcp://localhost:%s"%self.PORT, self.Abc())
 		self.abc.start(False)
 
 		# sleep pour être sûr que la connection soit établie
@@ -102,24 +102,23 @@ class AsyncServiceTestCase(_ServiceTest, unittest.TestCase):
 	def test_basic(self):
 		self.abc.dynamic_workers = False
 		# send sleep 1 sec and ping
-		self.send_sleep(1)
+		self.send_sleep(0.1)
 		self.send_ping()
 		# recv ping first
 		msg = self.socket.recv_multipart()
 		self.assertEqual(msg, self.response_ping())
 		# then recv sleep
 		msg = self.socket.recv_multipart()
-		self.assertEqual(msg, self.response_sleep(1))
+		self.assertEqual(msg, self.response_sleep(0.1))
 
 	def test_grow_workers(self):
 		self.abc.dynamic_workers = True
 		current_n_workers = len(self.abc._workers)
-		# send pleins de sleep 1 sec
-		for i in range(current_n_workers*4): self.send_sleep(1, "sleep-%s"%i)
-		time.sleep(0.5)
+		# send pleins de sleeps
+		for i in range(current_n_workers*4): self.send_sleep(0.3, "sleep-%s"%i)
+		time.sleep(0.05)
 		# on voit si le nombre de workers à augmenté
 		self.assertGreaterEqual(len(self.abc._workers), current_n_workers*4)
-		time.sleep(0.75)
 		
 if __name__ == '__main__':
     unittest.main()

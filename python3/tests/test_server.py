@@ -2,6 +2,7 @@
 import unittest
 
 import time
+import multiprocessing
 
 from zerobot import *
 
@@ -22,15 +23,17 @@ class BaseServerTestCase:
 
 
 	def setUp(self):
-		self.server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,
-			"tcp://*:%s"%self.LOG_PORT, "tcp://*:%s"%self.EV_PULLER, "tcp://*:%s"%self.EV_PUBLISHER)
-		self.server.start(False)
-		time.sleep(0.1)
+		def f():
+			server = Server("tcp://*:%s"%self.FRONTEND_PORT,"tcp://*:%s"%self.BACKEND_PORT,
+				"tcp://*:%s"%self.LOG_PORT, "tcp://*:%s"%self.EV_PULLER, "tcp://*:%s"%self.EV_PUBLISHER)
+			server.start()
+		self.p = multiprocessing.Process(target=f)
+		self.p.daemon = True
+		self.p.start()
+		time.sleep(0.5)
 
 	def tearDown(self):
-		time.sleep(0.2)
-		self.server.close()
-		del self.server
+		self.p.terminate()
 		time.sleep(0.2)
 
 class ServerTestCase(BaseServerTestCase, unittest.TestCase):
@@ -67,7 +70,6 @@ class ServerAndClientsTestCase(BaseServerAndClientsTestCase, unittest.TestCase):
 	
 	def test_route(self):
 		msg_content = b"coucou"
-		server = self.server
 		client1 = self.client1
 		client2 = self.client2
 		client3 = self.client3
@@ -76,7 +78,7 @@ class ServerAndClientsTestCase(BaseServerAndClientsTestCase, unittest.TestCase):
 		client1.send_multipart([client2.identity.encode(), msg_content])
 
 		# sleep
-		time.sleep(0.1)
+		time.sleep(0.05)
 
 		# vérification de la réception
 		self.assertTrue(hasattr(client2,'msg'))
@@ -88,7 +90,7 @@ class ServerAndClientsTestCase(BaseServerAndClientsTestCase, unittest.TestCase):
 		client2.send_multipart([client1.identity.encode(), msg_content])
 
 		# sleep
-		time.sleep(0.1)
+		time.sleep(0.05)
 
 		# vérification de la reception
 		self.assertTrue(hasattr(client1,'msg'))
@@ -117,7 +119,6 @@ class ServerEventsTestCase(BaseServerEventsTestCase, unittest.TestCase):
 	def test_event(self):
 		ev_key = "yo"
 		ev_obj = ["coucou", "tout le monde"]
-		server = self.server
 		client1 = self.client1
 		client2 = self.client2
 		logger = self.logger
@@ -135,7 +136,7 @@ class ServerEventsTestCase(BaseServerEventsTestCase, unittest.TestCase):
 		client2.send_event(ev_key, ev_obj)
 
 		# sleep
-		time.sleep(0.1)
+		time.sleep(0.05)
 		
 		# vérification de la reception
 		self.assertEqual(self.ev_recv, True)

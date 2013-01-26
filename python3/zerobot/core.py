@@ -7,6 +7,8 @@ import logging
 from zmq.eventloop import ioloop
 from collections import defaultdict
 
+logger = logging.getLogger(__name__)
+
 class ZeroBotException(Exception):
 	def __init__(self, err):
 		Exception.__init__(self, err['error'])
@@ -220,7 +222,10 @@ class BaseClient(Base):
 	
 	def send_multipart(self, msg):
 		""" Envoyer un message en plusieurs parties via la socket. zmq style."""
-		self.socket.send_multipart(msg)
+		if self.socket.closed:
+			logger.warning("socket closed, drop msg '%s'" % msg)
+		else:
+			self.socket.send_multipart(msg)
 
 	def send(self, msg):
 		""" Envoyer un message via la socket. zmq style."""
