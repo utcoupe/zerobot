@@ -1,12 +1,66 @@
 from collections import OrderedDict
-import traceback
-
 from ..ioadapter import *
 from ..core import *
 
+import traceback
+import struct
 
 import logging
 logger = logging.getLogger(__name__)
+
+			
+
+class BinaryProtocol:
+	
+	def pack(self, uid, id_cmd, args):
+		"""
+			    name   | size(bits) |  start   |  end  
+			===========|============|==========|=======
+			 uid       |     16     |     0    |   16
+			 id_cmd    |      8     |    16    |   24
+			 nb_args   |      8     |    24    |   32
+			 arg0      |     16     |    32    |   48
+			 arg1      |     16     |    48    |   64
+			 ..        |     ..     |    ..    |   ..
+			 argN      |     16     | 32+16*N  | 32+16*(N+1)
+		"""
+		uid = int(uid)
+		id_cmd = int(id_cmd)
+		args = list([ int(x) for x in args ])
+		n_args = len(args)
+		b = struct.pack('hbb'+('h'*n_args), uid, id_cmd, n_args, *args)
+		return b
+
+	def read(self, fd):
+		"""
+			    name   | size(bits) 
+			===========|============
+			 uid       |     16
+			 type      |      8
+			 nb_args   |      8
+			 arg0      |     16
+			 arg1      |     16     
+			 ..        |     ..
+			 argN      |     16
+		"""
+		buff_header = fd.read(struct.calcsize('hbb'))
+		logger.debug("buff_header : %s", buff_header)
+		header = self.unpack_header(buff_header)
+		uid,flags,n_args = header
+		buff_contents = fd.read(struct.calcsize('h'*n_args))
+		args = self.unpack_contents(header, buff_contents)
+		logger.debug("buff_contents : %s", buff_contents)
+		return uid,flags,args
+	
+	def unpack_header(self, buff):
+		uid,flags,n_args = struct.unpack('hbb', buff)
+		return uid,flags,n_args
+
+	def unpack_contents(self, header, buff):
+		uid,flags,n_args = header
+		args = struct.unpack('h'*n_args, buff)
+		return args
+
 
 class ArduinoFunction:
 	SEPARATOR = '+'
@@ -45,31 +99,6 @@ class ArduinoFunction:
 				raise TypeError("%s needs argument'%s'" % (self.name, k))
 		
 		return tuple(map(lambda x: int(x), params.values()))
-
-	def encode_call(self, uid, params):
-		"""
-			    name   | size(bits) |  start   |  end  
-			===========|============|==========|=======
-			 uid       |     16     |     0    |   16
-			 id_cmd    |      8     |    16    |   24
-			 nb_args   |      8     |    24    |   32
-			 arg0      |     16     |    32    |   48
-			 arg1      |     16     |    48    |   64
-			 ..        |     ..     |    ..    |   ..
-			 argN      |     16     | 32+16*N  | 32+16*(N+1)
-		"""
-		b = b''
-		b += uid.to_bytes(2, 'little')
-		b += self.arduino_id.to_bytes(1, 'little')
-		b += len(params).to_bytes(1, 'little')
-		for p in params:
-			b += p.to_bytes(2, 'little', signed=True)
-		return b
-	
-	def __call__(self, uid, *args, **kwargs):
-		params = self.compute_params(*args, **kwargs)
-		encoded_call = self.encode_call(uid, params)
-		return encoded_call
 	
 	def __repr__(self):
 		params = ','.join([
@@ -79,49 +108,28 @@ class ArduinoFunction:
 		return "{name}({params})".format(name=self.name, params=params)
 
 class ArduinoAdapter(IOAdapter):
-	def __init__(self, identity, conn_addr, serial, functions={}, event_keys={}, *, max_id=10000, **kwargs):
+	def __init__(self, identity, conn_addr, serial, functions={},
+			event_keys={}, *, max_id=10000, protocol='bin', **kwargs):
 		super(ArduinoAdapter, self).__init__(identity, conn_addr, **kwargs)
+		if protocol not in ('txt', 'bin'):
+			raise ValueError('protocol must be text or bin')
 		self.serial = serial
 		self.free_ids = list(range(max_id))
 		self.requests = {}
 		self.functions = functions
 		self.event_keys = event_keys
+		if protocol == 'bin':
+			self.protocol = BinaryProtocol()
+		else:
+			raise NotImplementedError()
 
 	def read(self):
-		"""
-			    name   | size(bits) 
-			===========|============
-			 uid       |     16
-			 type      |      8
-			 nb_args   |      8
-			 arg0      |     16
-			 arg1      |     16     
-			 ..        |     ..
-			 argN      |     16
-		"""
 		while not self.serial:
 			time.sleep(1)
 		try:
-			# uid
-			b = self.serial.read(2)
-			uid = int.from_bytes(b, 'little')
-			logger.debug("uid %s %s", b, uid)
-			# type
-			b = self.serial.read(1)
-			t = int.from_bytes(b, 'little')
-			logger.debug("type %s %s", b, t)
-			# nb args
-			b = self.serial.read(1)
-			nb_args = int.from_bytes(b, 'little')
-			logger.debug("nb_args %s %s", b, nb_args)
-			args = []
-			for i in range(nb_args):
-				b = self.serial.read(2)
-				a = int.from_bytes(b, 'little', signed=True)
-				logger.debug("barg%s %s %s", i, b, a)
-				args.append(a)
-			logger.info("read : uid=%s, t=%s, nb_args=%s, args=%s", uid, t, nb_args, args)
-			return uid, t, args
+			uid,flags,args = self.protocol.read(self.serial)
+			logger.info("read : uid=%s, flags=%s, args=%s", uid, flags, args)
+			return uid, flags, args
 		except Exception as ex:
 			self.logger.exception(ex)
 
@@ -170,7 +178,9 @@ class ArduinoAdapter(IOAdapter):
 				self.requests[i] = (remote_id, uid)
 				args = request.args
 				kwargs = request.kwargs
-				msg = self.functions[request.fct](i, *args, **kwargs)
+				f = self.functions[request.fct]
+				args = f.compute_params(*args, **kwargs)
+				msg = self.protocol.pack(i, f.arduino_id, args)
 				logger.info("send to serial : %s" % msg)
 				return msg
 		except Exception as ex:

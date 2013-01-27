@@ -4,7 +4,7 @@
 using namespace std;
 
 
-#include "message.cpp"
+#include "message_bin.hpp"
 
 
 void acall(int16_t uid, int8_t id_cmd, int8_t nb_args, int16_t args[MAX_ARGS]) {

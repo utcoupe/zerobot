@@ -1,1 +1,0 @@
-../../../python3/zerobot/ioadapters/message.cpp

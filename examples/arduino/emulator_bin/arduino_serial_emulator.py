@@ -74,7 +74,8 @@ if __name__ == '__main__':
 	
 	a = ArduinoAdapter('arduino-service', 'tcp://localhost:5000', e,
 				functions={"hello": f}, event_keys={56: "event_hello"},
-				ev_push_addr="tcp://localhost:5001")
+				ev_push_addr="tcp://localhost:5001",
+				protocol='bin')
 	
 	
 	try:

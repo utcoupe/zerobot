@@ -1,3 +1,5 @@
+#include "message_bin.hpp"
+
 #if defined(ARDUINO) && ARDUINO >= 100
 #	include "Arduino.h"
 #elif defined(ARDUINO)
@@ -5,47 +7,8 @@
 #	include "wiring.h"
 #else
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-class _Serial {
-	public:
-		_Serial() : _available(0) {};
-		int readBytes(char * buffer, int length) {
-			for (int i=0; i<length; ++i) {
-				buffer[i] = read();
-			}
-			return length;
-		};
-		int available() {
-			_available += rand() % 10;
-			return _available;
-		};
-		int read() {
-			_available -= 1;
-			return getchar();
-		};
-		int write(char v) {
-			putchar(v);
-			return 1;
-		};
-		int write(char * buff, int len) {
-			for (char * c=buff; c<buff+len; ++c) {
-				putchar(*c);
-			}
-			return len;
-		};
-
-	private:
-		int _available;
-};
-_Serial Serial = _Serial();
 #endif
 
-
-#define MAX_ARGS	10 // nombre maximum d'arguments pour un appel de methode
-#define LEN_uid		2  // uid = 2 char
 
 
 /**
@@ -61,7 +24,7 @@ _Serial Serial = _Serial();
  *
  * Renvoie le nombre d'octes lus
  */
-int read_incomming_data(void (*call)(int16_t, int8_t, int8_t, int16_t[MAX_ARGS]), int max_read=100) {
+int read_incomming_data(void (*call)(int16_t, int8_t, int8_t, int16_t[MAX_ARGS]), int max_read) {
 	static char state=0;           // 0:uid  1=id_cmd  2=nb_args  3==args
 	static int16_t uid;            // uid (16 bits)
 	static char * puid = (char*)&uid; // version char[2] de uid
