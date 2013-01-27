@@ -4,7 +4,7 @@
 using namespace std;
 
 
-#include "message_bin.hpp"
+#include "message.hpp"
 
 
 void acall(int16_t uid, int8_t id_cmd, int8_t nb_args, int16_t args[MAX_ARGS]) {
@@ -17,9 +17,9 @@ void acall(int16_t uid, int8_t id_cmd, int8_t nb_args, int16_t args[MAX_ARGS]) {
 	for (int i=0; i<nb_args; ++i)
 		cerr << "\targ" << i << ":\t" << args[i] << endl;
 
-	send_response(uid, nb_args, args);
+	sendResponse(uid, nb_args, args);
 	cerr << "sent response" << endl;
-	send_event(56, nb_args, args);
+	sendEvent(56, nb_args, args);
 	cerr << "sent event" << endl;
 }
 
@@ -29,8 +29,10 @@ int main() {
 	srand ( time(NULL) );
 
 	int l=0;
-	while (l < 20) {
-		l += read_incomming_data(acall, 5);
+	while (l < 40) {
+		int ll = readIncomingData(acall, 5);
+		cerr << "lue " << ll << endl;
+		l += ll;
 	}
 
 	return 0;

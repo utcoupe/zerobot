@@ -3,7 +3,7 @@ import sys
 import os
 
 DIR = os.path.dirname(__file__)
-ZEROBOT_DIR = os.path.join(DIR, '..', '..', '..', 'python3')
+ZEROBOT_DIR = os.path.join(DIR, '..', '..', 'python3')
 sys.path.append(os.path.abspath(ZEROBOT_DIR))
 
 
@@ -47,15 +47,41 @@ class Emulator:
 		return buff[self.last_read-l:self.last_read]
 		'''
 
+	def readline(self):
+		return self.p.stdout.readline()
+
 	def write(self, m):
 		self.p.stdin.write(m)
 		self.p.stdin.flush()
 
 if __name__ == '__main__':
+	import sys
 	import time
 	import zmq
+	import optparse
 	import logging
-	#logging.basicConfig(level=0)
+
+	parser = optparse.OptionParser()
+	parser.add_option("-e", "--exe", dest="exe",
+			help="executable to wrap")
+	parser.add_option("-p", "--protocol", dest="protocol",
+			help="protocol type ('txt' or 'bin')")
+	parser.add_option("-d", "--debug",
+			action="store_true", dest="debug", default=False,
+			help="show debug")
+	(options, args) = parser.parse_args()
+
+	if options.debug:
+		logging.basicConfig(level=0)
+	else:
+		logging.basicConfig(level='INFO')
+
+	if not options.exe:
+		print("Give an executable !")
+		exit(1)
+	if not options.protocol:
+		print("Give a protocol type !")
+		exit(1)
 
 	ctx = zmq.Context()
 	s = ctx.socket(zmq.ROUTER)
@@ -65,7 +91,7 @@ if __name__ == '__main__':
 	l = ctx.socket(zmq.ROUTER)
 	l.bind('tcp://*:5001')
 	
-	e = Emulator("./a.out")
+	e = Emulator(options.exe)
 
 	args = OrderedDict()
 	args['a'] = None
@@ -75,7 +101,7 @@ if __name__ == '__main__':
 	a = ArduinoAdapter('arduino-service', 'tcp://localhost:5000', e,
 				functions={"hello": f}, event_keys={56: "event_hello"},
 				ev_push_addr="tcp://localhost:5001",
-				protocol='bin')
+				protocol=options.protocol)
 	
 	
 	try:

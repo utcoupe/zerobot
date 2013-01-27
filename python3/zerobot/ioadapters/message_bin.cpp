@@ -1,4 +1,4 @@
-#include "message_bin.hpp"
+#include "message.hpp"
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #	include "Arduino.h"
@@ -24,7 +24,7 @@
  *
  * Renvoie le nombre d'octes lus
  */
-int read_incomming_data(void (*call)(int16_t, int8_t, int8_t, int16_t[MAX_ARGS]), int max_read) {
+int readIncomingData(void (*call)(int16_t, int8_t, int8_t, int16_t[MAX_ARGS]), int max_read) {
 	static char state=0;           // 0:uid  1=id_cmd  2=nb_args  3==args
 	static int16_t uid;            // uid (16 bits)
 	static char * puid = (char*)&uid; // version char[2] de uid
@@ -118,11 +118,11 @@ int send(int16_t uid, char type, int8_t nb_args, int16_t args[MAX_ARGS]) {
 	return r;
 }
 
-int send_response(int16_t uid, int16_t nb_args, int16_t args[MAX_ARGS]) {
+int sendResponse(int16_t uid, int16_t nb_args, int16_t args[MAX_ARGS]) {
 	return send(uid, 1, nb_args, args);
 }
 
-int send_event(int16_t uid, int16_t nb_args, int16_t args[MAX_ARGS]) {
+int sendEvent(int16_t uid, int16_t nb_args, int16_t args[MAX_ARGS]) {
 	return send(uid, 0, nb_args, args);
 }
 

@@ -7,7 +7,6 @@ import struct
 
 import logging
 logger = logging.getLogger(__name__)
-
 			
 
 class BinaryProtocol:
@@ -62,8 +61,28 @@ class BinaryProtocol:
 		return args
 
 
+class TextProtocol:
+	SEP = '+'
+	
+	def pack(self, uid, id_cmd, args):
+		m = self.SEP.join([str(uid), str(id_cmd)] + [ str(x) for x in args ])
+		m += '\n'
+		m = m.encode('utf-8')
+		return m
+
+	def read(self, fd):
+		buff = fd.readline()[:-1]
+		logger.debug("recv : %s", buff)
+		msg = buff.decode('utf-8')
+		if msg.endswith(self.SEP):
+			msg = msg[:-1]
+		msg = msg.split(self.SEP)
+		uid = int(msg[0])
+		flags = int(msg[1])
+		args = msg[2:]
+		return uid,flags,args
+
 class ArduinoFunction:
-	SEPARATOR = '+'
 	
 	def __init__(self, name, arduino_id, doc, args):
 		"""
@@ -109,7 +128,7 @@ class ArduinoFunction:
 
 class ArduinoAdapter(IOAdapter):
 	def __init__(self, identity, conn_addr, serial, functions={},
-			event_keys={}, *, max_id=10000, protocol='bin', **kwargs):
+			event_keys={}, *, max_id=10000, protocol='txt', **kwargs):
 		super(ArduinoAdapter, self).__init__(identity, conn_addr, **kwargs)
 		if protocol not in ('txt', 'bin'):
 			raise ValueError('protocol must be text or bin')
@@ -121,15 +140,17 @@ class ArduinoAdapter(IOAdapter):
 		if protocol == 'bin':
 			self.protocol = BinaryProtocol()
 		else:
-			raise NotImplementedError()
+			self.protocol = TextProtocol()
 
 	def read(self):
 		while not self.serial:
 			time.sleep(1)
 		try:
-			uid,flags,args = self.protocol.read(self.serial)
-			logger.info("read : uid=%s, flags=%s, args=%s", uid, flags, args)
-			return uid, flags, args
+			m = self.protocol.read(self.serial)
+			if m:
+				uid,flags,args = m
+				logger.info("read : uid=%s, flags=%s, args=%s", uid, flags, args)
+				return uid, flags, args
 		except Exception as ex:
 			self.logger.exception(ex)
 
