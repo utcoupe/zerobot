@@ -4,6 +4,8 @@ from ..core import *
 
 import traceback
 import struct
+import os
+import re
 
 import logging
 logger = logging.getLogger(__name__)
@@ -15,13 +17,13 @@ class BinaryProtocol:
 		"""
 			    name   | size(bits) |  start   |  end  
 			===========|============|==========|=======
-			 uid       |     16     |     0    |   16
-			 id_cmd    |      8     |    16    |   24
-			 nb_args   |      8     |    24    |   32
-			 arg0      |     16     |    32    |   48
-			 arg1      |     16     |    48    |   64
-			 ..        |     ..     |    ..    |   ..
-			 argN      |     16     | 32+16*N  | 32+16*(N+1)
+			 uid	   |	 16	|     0	   |   16
+			 id_cmd	   |	  8	|    16	   |   24
+			 nb_args   |	  8	|    24	   |   32
+			 arg0	   |	 16	|    32	   |   48
+			 arg1	   |	 16	|    48	   |   64
+			 ..	   |	 ..	|    ..	   |   ..
+			 argN	   |	 16	| 32+16*N  | 32+16*(N+1)
 		"""
 		uid = int(uid)
 		id_cmd = int(id_cmd)
@@ -34,13 +36,13 @@ class BinaryProtocol:
 		"""
 			    name   | size(bits) 
 			===========|============
-			 uid       |     16
-			 type      |      8
-			 nb_args   |      8
-			 arg0      |     16
-			 arg1      |     16     
-			 ..        |     ..
-			 argN      |     16
+			 uid	   |	 16
+			 type	   |	  8
+			 nb_args   |	  8
+			 arg0	   |	 16
+			 arg1	   |	 16	
+			 ..	   |	 ..
+			 argN	   |	 16
 		"""
 		buff_header = fd.read(struct.calcsize('hbb'))
 		logger.debug("buff_header : %s", buff_header)
@@ -128,7 +130,8 @@ class ArduinoFunction:
 
 class ArduinoAdapter(IOAdapter):
 	def __init__(self, identity, conn_addr, serial, functions={},
-			event_keys={}, *, max_id=10000, protocol='txt', **kwargs):
+		     event_keys={}, *, max_id=10000, protocol='txt',
+		     protocol_file=None, prefix='Q_', **kwargs):
 		super(ArduinoAdapter, self).__init__(identity, conn_addr, **kwargs)
 		if protocol not in ('txt', 'bin'):
 			raise ValueError('protocol must be text or bin')
@@ -141,6 +144,9 @@ class ArduinoAdapter(IOAdapter):
 			self.protocol = BinaryProtocol()
 		else:
 			self.protocol = TextProtocol()
+
+		if not(protocol_file is None):
+			self.load_protocol_from_file(protocol_file, prefix)
 
 	def read(self):
 		while not self.serial:
@@ -216,3 +222,60 @@ class ArduinoAdapter(IOAdapter):
 			return '\n'.join(( str(v) for v in self.functions.values()))
 		else:
 			return self.functions[request.args[0]].__doc__
+
+	def load_protocol_from_file(self, protocol_file, prefix):
+		"""
+		Récupérer le protocol dans le fichier .h précisé.
+		Les commandes doivent être formater de la sorte :
+		{@code
+		/**
+		Documentation
+		\@param abc
+		\@param t
+		*/
+		#define {prefixe}NOM_DE_LA_COMMANDE		4
+		}
+
+		@param str_protocol
+		@param prefix le prefixes des defines
+		@return une liste de dictionnaires {id: ?, name: ?, params: ?, doc: ?} + le caracère de séparation
+		"""
+		
+		try:
+			str_protocol =  open(protocol_file).read()
+		except IOError as e:
+			self.logger.error("Unable to load protocol file (%s) : %s" % (protocol_file, e.strerror))
+			return
+
+		sep = '+'
+
+		# spec des regexp
+		spec_sep = '#define\s+SEP\s+[\'"](?P<sep>.)[\'"]'
+		spec_doc = '\/\*\*(?P<doc>(.(?!\*\/))*.)\*\/'
+		spec_define = '#define\s+{prefix}(?P<name>\w+)\s+(?P<id>\d+)'.format(prefix=prefix)
+		spec_cmd = spec_doc+"\s*"+spec_define
+		spec_params = '@param\s+(?P<param>[a-zA-Z_]\w*)'
+		spec_event = '@event'
+
+		# compilation de la regexp des params car elle es appellée plusieurs fois
+		re_params = re.compile(spec_params)
+		re_event = re.compile(spec_event)
+
+		# recherche du caractère de séparation
+		t = re.search(spec_sep, str_protocol)
+		if t:
+			self.separator = t.group("sep")
+		else:
+			raise ProtocolException("le protocol de contient pas de caractère de séparation")
+
+		# recherche des commandes
+		for t in re.finditer(spec_cmd,str_protocol,re.DOTALL):
+			name = t.group('name').lower()
+			if re_event.search(t.group('doc')):
+				self.events[name] = {'id': int(t.group('id')), 'doc': t.group('doc')}
+			else:
+				params = OrderedDict()
+				for p in re_params.finditer(t.group('doc')):
+					params[p.group('param')] = None
+				self.functions[name] = ArduinoFunction(name, int(t.group('id')), t.group('doc'), params)
+			#print(commands[-1])
