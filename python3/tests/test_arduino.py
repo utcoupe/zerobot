@@ -15,7 +15,7 @@ from test_ioadapter import IOAdapterTest
 class ArduinoAdapterTest(IOAdapterTest, unittest.TestCase):
 	KLASS = ArduinoAdapter
 	ARGS = (
-		"/dev/ttyACM0",
+		None,
 		{'echo': ArduinoFunction("echo", 12345, "some doc", {"a": 42})}
 	)
 		
