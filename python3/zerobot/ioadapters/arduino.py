@@ -272,7 +272,7 @@ class ArduinoAdapter(IOAdapter):
 		for t in re.finditer(spec_cmd,str_protocol,re.DOTALL):
 			name = t.group('name').lower()
 			if re_event.search(t.group('doc')):
-				self.events[name] = {'id': int(t.group('id')), 'doc': t.group('doc')}
+				self.event_keys[int(t.group('id'))] = name
 			else:
 				params = OrderedDict()
 				for p in re_params.finditer(t.group('doc')):
