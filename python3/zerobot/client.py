@@ -22,8 +22,8 @@ class Client(BaseClient):
 	* uid : preciser l'id de la request
 	* timeout : si le service ne repond pas, une exception sera levée
 	"""
-	def __init__(self, identity, conn_addr, remote_id, ctx=None):
-		super(Client, self).__init__(identity, conn_addr, ctx)
+	def __init__(self, identity, conn_addr, remote_id, *args, **kwargs):
+		super(Client, self).__init__(identity, conn_addr, *args, **kwargs)
 		self.remote_id = remote_id
 
 		self.cb_fct = None
@@ -101,15 +101,14 @@ class AsyncClient(BaseClient):
 		client.sleep(3, timeout=1, block=True)
 		# raise Exception
 	"""
-	def __init__(self, identity, conn_addr, remote_id, ctx=None):
+	def __init__(self, identity, conn_addr, remote_id, *args, **kwargs):
 		"""
 		@param {str} identity
 		@param {str} bind_addr adresse du frontend du serveur
 		@param {str} remote_id identity du client distant
 		@param {zmq.Context} zmq ctx
 		"""
-		super(AsyncClient, self).__init__(identity, conn_addr, ctx)
-		
+		super(AsyncClient, self).__init__(identity, conn_addr, *args, **kwargs)
 		self.remote_id = remote_id
 		self._resp_events = {}
 		self._cb_push = self.ctx.socket(zmq.PUSH)

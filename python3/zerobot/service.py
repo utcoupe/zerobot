@@ -5,6 +5,7 @@ from .proxy import Proxy
 import queue
 import traceback
 import inspect
+import types
 
 #signal.signal(signal.SIGINT, signal_handler)
 class Service(BaseClient):
@@ -22,9 +23,12 @@ class Service(BaseClient):
 	*ctx* zmq context
 	
 	"""
-	def __init__(self, identity, conn_addr, exposed_obj, *, ctx=None):
-		super(Service,self).__init__(identity, conn_addr, ctx=ctx)
+	def __init__(self, identity, conn_addr, exposed_obj, *args, **kwargs):
+		super(Service,self).__init__(identity, conn_addr, *args, **kwargs)
 		self.exposed_obj = exposed_obj
+
+		#on ajoute une méthode send_event à l'object exposé
+		exposed_obj.send_event = types.MethodType(lambda s, k, o : self.send_event(k, o), exposed_obj)
 
 	def _process(self, fd, _ev):
 		"""
