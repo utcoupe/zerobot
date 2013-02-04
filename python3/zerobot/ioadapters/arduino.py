@@ -6,6 +6,7 @@ import traceback
 import struct
 import os
 import re
+import serial
 
 import logging
 logger = logging.getLogger(__name__)
@@ -130,8 +131,9 @@ class ArduinoFunction:
 
 class ArduinoAdapter(IOAdapter):
 	def __init__(self, identity, conn_addr, serial, functions={},
-		     event_keys={}, *, max_id=10000, protocol='txt',
-		     protocol_file=None, prefix='Q_', **kwargs):
+		     event_keys={}, errors={}, *, max_id=10000, protocol='txt',
+		     protocol_file=None, prefix='Q_', prefix_erreur = 'E_',
+       		     **kwargs):
 		super(ArduinoAdapter, self).__init__(identity, conn_addr, **kwargs)
 		if protocol not in ('txt', 'bin'):
 			raise ValueError('protocol must be text or bin')
@@ -140,13 +142,16 @@ class ArduinoAdapter(IOAdapter):
 		self.requests = {}
 		self.functions = functions
 		self.event_keys = event_keys
+		self.errors = errors
 		if protocol == 'bin':
 			self.protocol = BinaryProtocol()
 		else:
 			self.protocol = TextProtocol()
 
 		if not(protocol_file is None):
-			self.load_protocol_from_file(protocol_file, prefix)
+			self.load_protocol_from_file(protocol_file, prefix, prefix_erreur)
+
+		self.arduino_disconnected = False
 
 	def read(self):
 		while not self.serial:
@@ -157,6 +162,10 @@ class ArduinoAdapter(IOAdapter):
 				uid,flags,args = m
 				logger.info("read : uid=%s, flags=%s, args=%s", uid, flags, args)
 				return uid, flags, args
+		except serial.SerialException as ex:
+			if not(self.arduino_disconnected):
+				self.send_event('disconnected', str(ex))
+				self.arduino_disconnected = True
 		except Exception as ex:
 			self.logger.exception(ex)
 
@@ -165,7 +174,7 @@ class ArduinoAdapter(IOAdapter):
 
 	def process_io_to_sock(self, msg):
 		uid, t, args = msg
-		if t == 0:
+		if (t & 0x01) == 0:
 			# alors c'est un event
 			# l'uid est l'id de l'event
 			ev_key = self.event_keys.get(uid, None)
@@ -182,7 +191,16 @@ class ArduinoAdapter(IOAdapter):
 				logger.warning('unknown reponse id %s' % uid)
 			else:
 				id_to, uuid = req
-				rep = Response(uuid, args)
+				if (t & 0x02): # Il y a une erreur
+					rep = Response(uuid, args)
+				else:
+					err = {'tb':''}
+					err_value = int(args[0])
+					if (err_value in self.errors.keys()):
+						err['error'] = self.errors[err_value]
+					else:
+						err['error'] = err_value
+					rep = Response(uuid, None, err)
 				del self.requests[uid]
 				self.free_ids.append(uid)
 				logger.info("reponse to %s : %s", id_to, rep)
@@ -223,7 +241,7 @@ class ArduinoAdapter(IOAdapter):
 		else:
 			return self.functions[request.args[0]].__doc__
 
-	def load_protocol_from_file(self, protocol_file, prefix):
+	def load_protocol_from_file(self, protocol_file, prefix, prefix_erreur):
 		"""
 		Récupérer le protocol dans le fichier .h précisé.
 		Les commandes doivent être formater de la sorte :
@@ -256,6 +274,7 @@ class ArduinoAdapter(IOAdapter):
 		spec_cmd = spec_doc+"\s*"+spec_define
 		spec_params = '@param\s+(?P<param>[a-zA-Z_]\w*)'
 		spec_event = '@event'
+		spec_erreur = '#define\s+%s(?P<name>\w+)\s+-?(?P<value>\d+)' % prefix_erreur
 
 		# compilation de la regexp des params car elle es appellée plusieurs fois
 		re_params = re.compile(spec_params)
@@ -279,3 +298,9 @@ class ArduinoAdapter(IOAdapter):
 					params[p.group('param')] = None
 				self.functions[name] = ArduinoFunction(name, int(t.group('id')), t.group('doc'), params)
 			#print(commands[-1])
+
+		for t in re.finditer(spec_erreur, str_protocol, re.DOTALL):
+			name = t.group('name').lower()
+			val = -int(t.group('value'))
+			self.errors[val] = name
+		print(self.errors)
