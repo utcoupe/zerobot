@@ -36,6 +36,34 @@ class Service
 		};
 
 
+		/**
+		 * Renvoie une réponse au client
+		 */
+		void sendResponse(const string & remote_id, const Json::Value & request, Json::Value & data) {
+			Json::Value response;
+			Json::Value null_value;
+			response["uid"] = request["uid"];
+			response["error"] = null_value;
+			response["data"] = data;
+			string packed_response = _writer.write( response );
+            s_sendmore(_socket,  remote_id);
+			s_send(_socket, packed_response);
+		};
+		
+		/**
+		 * Renvoie une erreur au client
+		 */
+		void sendError(const string & remote_id, const Json::Value & request, const string error, const string traceback) {
+			Json::Value response;
+			response["uid"] = request["uid"];
+			response["error"]["error"] = error;
+			response["error"]["tb"] = traceback;
+			response["data"] = "";
+			string packed_response = _writer.write( response );
+            s_sendmore(_socket,  remote_id);
+			s_send(_socket, packed_response);
+		}
+
 	protected:
 		virtual void process_request(const string & remote_id, const Json::Value & request) = 0;
 		
