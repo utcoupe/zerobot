@@ -53,7 +53,7 @@ class Service
 		/**
 		 * Renvoie une erreur au client
 		 */
-		void sendError(const string & remote_id, const Json::Value & request, const string error, const string traceback) {
+		void sendError(const string & remote_id, const Json::Value & request, const string & error, const string & traceback) {
 			Json::Value response;
 			response["uid"] = request["uid"];
 			response["error"]["error"] = error;
