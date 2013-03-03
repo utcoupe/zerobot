@@ -131,7 +131,7 @@ class ArduinoFunction:
 
 class ArduinoAdapter(IOAdapter):
 	def __init__(self, identity, conn_addr, serial, functions={},
-		     event_keys={}, errors={}, *, max_id=10000, protocol='txt',
+		     event_keys={}, errors={}, *, max_id=2000, protocol='txt',
 		     protocol_file=None, prefix='Q_', prefix_erreur = 'E_',
        		     **kwargs):
 		super(ArduinoAdapter, self).__init__(identity, conn_addr, **kwargs)
@@ -191,9 +191,9 @@ class ArduinoAdapter(IOAdapter):
 				logger.warning('unknown reponse id %s' % uid)
 			else:
 				id_to, uuid = req
-				if (t & 0x02): # Il y a une erreur
+				if (t & 0x02) == 0:
 					rep = Response(uuid, args)
-				else:
+				else:  # Il y a une erreur
 					err = {'tb':''}
 					err_value = int(args[0])
 					if (err_value in self.errors.keys()):
@@ -216,6 +216,10 @@ class ArduinoAdapter(IOAdapter):
 				help_msg = self.help(request)
 				response = Response(request.uid, help_msg, None)
 				self.send_multipart([remote_id, response.pack()])
+			elif request.fct == 'kill':
+				resp = Response(request.uid, 'goobye', None)
+				self.send_multipart([remote_id, response.pack()])
+				quit()
 			# sinon c'est un appel a une fonction
 			else:
 				uid = request.uid
@@ -239,7 +243,7 @@ class ArduinoAdapter(IOAdapter):
 		if not request.args:
 			return '\n'.join(( str(v) for v in self.functions.values()))
 		else:
-			return self.functions[request.args[0]].__doc__
+			return self.functions[request.args[0]].__doc__ + ['kill']
 
 	def load_protocol_from_file(self, protocol_file, prefix, prefix_erreur):
 		"""
@@ -297,10 +301,8 @@ class ArduinoAdapter(IOAdapter):
 				for p in re_params.finditer(t.group('doc')):
 					params[p.group('param')] = None
 				self.functions[name] = ArduinoFunction(name, int(t.group('id')), t.group('doc'), params)
-			#print(commands[-1])
 
 		for t in re.finditer(spec_erreur, str_protocol, re.DOTALL):
 			name = t.group('name').lower()
-			val = -int(t.group('value'))
+			val = int(t.group('value'))
 			self.errors[val] = name
-		print(self.errors)
