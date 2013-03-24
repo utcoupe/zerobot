@@ -62,7 +62,7 @@ class Client(BaseClient):
 		if not self.ev_response.is_set():
 			raise Exception("timeout")
 		if self.response.error:
-			raise ZeroBotException(response.error)
+			raise ZeroBotException(self.response.error)
 		return self.response.data
 	
 	def __getattr__(self, name):
