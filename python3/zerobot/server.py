@@ -50,9 +50,10 @@ class Server(Proxy):
 	def _frontend_process_msg(self, msg):
 		#print("frontend")
 		self.publisher.send_multipart(msg)
+
 		try:
 			id_from, id_to, msg = msg
-		except Exception e:
+		except Exception:
 			print(msg)
 			return msg
 		else:
