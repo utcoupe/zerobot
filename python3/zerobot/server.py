@@ -52,7 +52,7 @@ class Server(Proxy):
 		self.publisher.send_multipart(msg)
 		try:
 			id_from, id_to, msg = msg
-		except Exception, e:
+		except Exception e:
 			print(msg)
 			return msg
 		else:
