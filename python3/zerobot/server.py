@@ -51,15 +51,19 @@ class Server(Proxy):
 		#print("frontend")
 		self.publisher.send_multipart(msg)
 
-		try:
-			id_from, id_to, msg = msg
-		except Exception:
-			print(msg)
-			return msg
-		else:
-			pass
-		finally:
-			pass
+		nb = len(msg)
+		if nb ==2:
+			id_from = msg[0]
+			id_to = id_from.decode().split('-')[-1].encode()
+			msg = msg[1]
+		elif nb==3:
+			id_from = msg[0]
+			id_to = msg[1]
+			msg = msg[2]
+		elif nb==4:
+			id_from = msg[0]
+			id_to = msg[2]
+			msg = msg[3]
 		#print('Frontend received %s' % ((id_from, id_to, msg),))
 		return [id_to,id_from,msg]
 
