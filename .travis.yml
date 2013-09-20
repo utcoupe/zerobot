@@ -5,5 +5,6 @@ python:
 install: "pip install -r python3/requirements.txt --use-mirrors"
 # command to run tests
 before_script:
+  - python -c "import zmq; print(zmq.zmq_version()); print(zmq.pyzmq_version());"
   - cd python3
 script: tests/runall.py

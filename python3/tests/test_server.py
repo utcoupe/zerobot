@@ -44,11 +44,11 @@ class ServerTestCase(BaseServerTestCase, unittest.TestCase):
 class BaseServerAndClientsTestCase(BaseServerTestCase):
 
 	def setUp(self):
-		client1 = self.BasicClient("Client-1", "tcp://*:%s"%self.FRONTEND_PORT,
-						"tcp://*:%s"%self.EV_PUBLISHER)
-		client2 = self.BasicClient("Client-2", "tcp://*:%s"%self.BACKEND_PORT,
-						ev_push_addr="tcp://*:%s"%self.EV_PULLER)
-		client3 = self.BasicClient("Client-3", "tcp://*:%s"%self.BACKEND_PORT)
+		client1 = self.BasicClient("Client-1", "tcp://localhost:%s"%self.FRONTEND_PORT,
+						"tcp://localhost:%s"%self.EV_PUBLISHER)
+		client2 = self.BasicClient("Client-2", "tcp://localhost:%s"%self.BACKEND_PORT,
+						ev_push_addr="tcp://localhost:%s"%self.EV_PULLER)
+		client3 = self.BasicClient("Client-3", "tcp://localhost:%s"%self.BACKEND_PORT)
 		client1.start(False)
 		client2.start(False)
 		client3.start(False)

@@ -216,10 +216,6 @@ class ArduinoAdapter(IOAdapter):
 				help_msg = self.help(request)
 				response = Response(request.uid, help_msg, None)
 				self.send_multipart([remote_id, response.pack()])
-			elif request.fct == 'kill':
-				resp = Response(request.uid, 'goobye', None)
-				self.send_multipart([remote_id, response.pack()])
-				quit()
 			# sinon c'est un appel a une fonction
 			else:
 				uid = request.uid
@@ -238,12 +234,17 @@ class ArduinoAdapter(IOAdapter):
 			err['error'] = str(ex)
 			response = Response(request.uid, None, err)
 			self.send_multipart([remote_id, response.pack()])
-
+	
+	def kill(self, request):
+		resp = Response(request.uid, 'goobye', None)
+		self.send_multipart([remote_id, response.pack()])
+		quit()
+	
 	def help(self, request):
 		if not request.args:
 			return '\n'.join(( str(v) for v in self.functions.values()))
 		else:
-			return self.functions[request.args[0]].__doc__ + ['kill']
+			return self.functions[request.args[0]].__doc__
 
 	def load_protocol_from_file(self, protocol_file, prefix, prefix_erreur):
 		"""
